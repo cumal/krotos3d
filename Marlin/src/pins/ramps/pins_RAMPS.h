@@ -197,11 +197,6 @@
   #define E1_CS_PIN                      AUX2_07
 #endif
 
-#define M1_ENABLE_PIN      59 // New pins
-#define M2_ENABLE_PIN      64 // New pins
-#define M3_ENABLE_PIN      65 // New pins
-#define M4_ENABLE_PIN      66 // New pins
-
 //
 // Temperature Sensors
 //
@@ -501,6 +496,11 @@
 #define AUX1_07                               58  // (A4)
 #define AUX1_08                                0  // RX0
 
+
+// #define M1_ENABLE_PIN      59
+// #define M2_ENABLE_PIN      64
+// #define M3_ENABLE_PIN      65
+// #define M4_ENABLE_PIN      66
 //
 // AUX2    GND A9 D40 D42 A11
 //          2   4   6   8  10

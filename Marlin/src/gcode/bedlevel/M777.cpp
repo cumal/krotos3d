@@ -55,25 +55,25 @@
   }
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
   if (mot==0){ // Activate motor 0 and disable rest
-    analogWrite(M1_ENABLE_PIN, 0);
-    analogWrite(M2_ENABLE_PIN, 255);
-    analogWrite(M3_ENABLE_PIN, 255);
-    analogWrite(M4_ENABLE_PIN, 255);
+    analogWrite(AUX2_03, 0);
+    analogWrite(AUX2_05, 255);
+    analogWrite(AUX2_10, 255);
+    analogWrite(AUX2_09, 255);
   } else if (mot==1) { // Activate motor 1 and disable rest
-    analogWrite(M2_ENABLE_PIN, 0);
-    analogWrite(M1_ENABLE_PIN, 255);
-    analogWrite(M3_ENABLE_PIN, 255);
-    analogWrite(M4_ENABLE_PIN, 255);
+    analogWrite(AUX2_05, 0);
+    analogWrite(AUX2_03, 255);
+    analogWrite(AUX2_10, 255);
+    analogWrite(AUX2_09, 255);
   } else if (mot==2) { // Activate motor 2 and disable rest
-    analogWrite(M3_ENABLE_PIN, 0);
-    analogWrite(M1_ENABLE_PIN, 255);
-    analogWrite(M2_ENABLE_PIN, 255);
-    analogWrite(M4_ENABLE_PIN, 255);
+    analogWrite(AUX2_10, 0);
+    analogWrite(AUX2_03, 255);
+    analogWrite(AUX2_05, 255);
+    analogWrite(AUX2_09, 255);
   } else if (mot==3) { // Activate motor 3 and disable rest
-    analogWrite(M4_ENABLE_PIN, 0);
-    analogWrite(M1_ENABLE_PIN, 255);
-    analogWrite(M2_ENABLE_PIN, 255);
-    analogWrite(M3_ENABLE_PIN, 255);
+    analogWrite(AUX2_09, 0);
+    analogWrite(AUX2_03, 255);
+    analogWrite(AUX2_05, 255);
+    analogWrite(AUX2_10, 255);
   }
   for (int x = 0; x < abs(loo*40); x++) { // Move steps. Normally 400 steps per mm, reduced to 40 see (1)
     digitalWrite(Z_STEP_PIN, HIGH);
@@ -83,10 +83,10 @@
     idle();
   }
   // Deactivate motor
-  if (mot==0){ analogWrite(M1_ENABLE_PIN, 255); }
-  else if (mot==1){ analogWrite(M2_ENABLE_PIN, 255); }
-  else if (mot==2){ analogWrite(M3_ENABLE_PIN, 255); }
-  else if (mot==3){ analogWrite(M4_ENABLE_PIN, 255); }
+  if (mot==0){ analogWrite(AUX2_03, 255); }
+  else if (mot==1){ analogWrite(AUX2_05, 255); }
+  else if (mot==2){ analogWrite(AUX2_10, 255); }
+  else if (mot==3){ analogWrite(AUX2_09, 255); }
   analogWrite(Z_ENABLE_PIN, 0); // Activate Z steppers to keep height
 }
 
