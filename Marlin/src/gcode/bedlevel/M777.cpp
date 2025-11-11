@@ -39,7 +39,7 @@
 // Custom parameters
 #define MAXREPETITIONS 5
 #define MAXOFFSET 2 // correspond to 0.2 see (1)
-#define Z_MOTORS_POS { { 20, 200 } , { 20, 40 } , { 160 , 200 } , { 160 , 40 } }
+#define Z_MOTORS_POS { { 20, Y_BED_SIZE-30 } , { 20, 40 } , { X_BED_SIZE-70 , Y_BED_SIZE-30 } , { X_BED_SIZE-70 , 40 } }
 
 /**
  * M777: Hardware bed leveling
@@ -55,25 +55,25 @@
   }
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
   if (mot==0){ // Activate motor 0 and disable rest
-    analogWrite(M1_ENABLE_PIN, 0);
-    analogWrite(M2_ENABLE_PIN, 255);
-    analogWrite(M3_ENABLE_PIN, 255);
-    analogWrite(M4_ENABLE_PIN, 255);
+    analogWrite(AUX2_03, 0);
+    analogWrite(AUX2_05, 255);
+    analogWrite(AUX2_10, 255);
+    analogWrite(AUX2_09, 255);
   } else if (mot==1) { // Activate motor 1 and disable rest
-    analogWrite(M2_ENABLE_PIN, 0);
-    analogWrite(M1_ENABLE_PIN, 255);
-    analogWrite(M3_ENABLE_PIN, 255);
-    analogWrite(M4_ENABLE_PIN, 255);
+    analogWrite(AUX2_05, 0);
+    analogWrite(AUX2_03, 255);
+    analogWrite(AUX2_10, 255);
+    analogWrite(AUX2_09, 255);
   } else if (mot==2) { // Activate motor 2 and disable rest
-    analogWrite(M3_ENABLE_PIN, 0);
-    analogWrite(M1_ENABLE_PIN, 255);
-    analogWrite(M2_ENABLE_PIN, 255);
-    analogWrite(M4_ENABLE_PIN, 255);
+    analogWrite(AUX2_10, 0);
+    analogWrite(AUX2_03, 255);
+    analogWrite(AUX2_05, 255);
+    analogWrite(AUX2_09, 255);
   } else if (mot==3) { // Activate motor 3 and disable rest
-    analogWrite(M4_ENABLE_PIN, 0);
-    analogWrite(M1_ENABLE_PIN, 255);
-    analogWrite(M2_ENABLE_PIN, 255);
-    analogWrite(M3_ENABLE_PIN, 255);
+    analogWrite(AUX2_09, 0);
+    analogWrite(AUX2_03, 255);
+    analogWrite(AUX2_05, 255);
+    analogWrite(AUX2_10, 255);
   }
   for (int x = 0; x < abs(loo*40); x++) { // Move steps. Normally 400 steps per mm, reduced to 40 see (1)
     digitalWrite(Z_STEP_PIN, HIGH);
@@ -83,10 +83,10 @@
     idle();
   }
   // Deactivate motor
-  if (mot==0){ analogWrite(M1_ENABLE_PIN, 255); }
-  else if (mot==1){ analogWrite(M2_ENABLE_PIN, 255); }
-  else if (mot==2){ analogWrite(M3_ENABLE_PIN, 255); }
-  else if (mot==3){ analogWrite(M4_ENABLE_PIN, 255); }
+  if (mot==0){ analogWrite(AUX2_03, 255); }
+  else if (mot==1){ analogWrite(AUX2_05, 255); }
+  else if (mot==2){ analogWrite(AUX2_10, 255); }
+  else if (mot==3){ analogWrite(AUX2_09, 255); }
   analogWrite(Z_ENABLE_PIN, 0); // Activate Z steppers to keep height
 }
 
@@ -95,14 +95,14 @@ int getDesviation(){
   gcode.process_subcommands_now("G91"); // Relative positioning
   if (digitalRead(Z_MIN_PIN) == LOW) { // Endpoint triggered. Go down
     while (digitalRead(Z_MIN_PIN) == LOW){
-      gcode.process_subcommands_now("G1 Z0.1 F500");
+      gcode.process_subcommands_now("G1 Z0.1");
       planner.synchronize();
       measuredDesv = measuredDesv - 1; // Use 1 instead of 0.1 to avoid float errors (1)
     }
     measuredDesv = measuredDesv + 1; // last move goes out height
   } else { // Endpoint not triggered. Go up
     while (digitalRead(Z_MIN_PIN) != LOW){
-      gcode.process_subcommands_now("G1 Z-0.1 F500");
+      gcode.process_subcommands_now("G1 Z-0.1");
       planner.synchronize();
       measuredDesv = measuredDesv + 1; // Use 1 instead of 0.1 to avoid float errors (1)
     }
@@ -129,7 +129,7 @@ float getMax(int array[]){
 
 void aBitDown(){
   gcode.process_subcommands_now("G91"); // Relative positioning
-  gcode.process_subcommands_now("G1 Z5 F500");
+  gcode.process_subcommands_now("G1 Z5");
   planner.synchronize();
   gcode.process_subcommands_now("G90"); // Absolute positioning
 }
@@ -163,7 +163,7 @@ void GcodeSuite::M777() {
     planner.synchronize(); // Wait move to finish
     for (int i = 0; i < 4; i++) {
       gcode.process_subcommands_now("G90"); // Absolute positioning
-      sprintf_P(cmd, PSTR("G1X%sY%sZ0F1300"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
+      sprintf_P(cmd, PSTR("G1X%sY%sZ0"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
       gcode.process_subcommands_now(cmd); // Move to measure position
       planner.synchronize();
       motDesv[i] = getDesviation(); // Gets the height difference
@@ -171,6 +171,8 @@ void GcodeSuite::M777() {
     for (int i = 0; i < 4; i++) {
       moveMotor(i, motDesv[i]); // fix height
     }
+    gcode.process_subcommands_now("G91"); // Relative positioning
+    gcode.process_subcommands_now("G1Z5");
     printDesviationSummary(motDesv);
     heightDiff = (getMax(motDesv) - getMin(motDesv));
     if ( (heightDiff <= MAXOFFSET) || (repTimes == MAXREPETITIONS) ) {

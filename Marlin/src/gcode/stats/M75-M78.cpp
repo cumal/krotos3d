@@ -40,9 +40,10 @@
  *        included in the command, print it in the header.
  */
 void GcodeSuite::M75() {
-  startOrResumeJob();
+  startOrResumeJob(); // ... ExtUI::onPrintTimerStarted()
   #if ENABLED(DWIN_LCD_PROUI)
-    if (!IS_SD_PRINTING()) DWIN_Print_Header(parser.string_arg && parser.string_arg[0] ? parser.string_arg : GET_TEXT(MSG_HOST_START_PRINT));
+    // TODO: Remove if M75 <string> is never used
+    if (!card.isStillPrinting()) dwinPrintHeader(parser.has_string() ? parser.string_arg : GET_TEXT(MSG_HOST_START_PRINT));
   #endif
 }
 
@@ -50,7 +51,7 @@ void GcodeSuite::M75() {
  * M76: Pause print timer
  */
 void GcodeSuite::M76() {
-  TERN(DWIN_LCD_PROUI, ui.pause_print(), print_job_timer.pause());
+  print_job_timer.pause(); // ... ExtUI::onPrintTimerPaused()
   TERN_(HOST_PAUSE_M76, hostui.pause());
 }
 

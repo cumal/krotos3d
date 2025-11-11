@@ -20,8 +20,11 @@
  *
  */
 
-#include "../gcode.h"
 #include "../../inc/MarlinConfig.h"
+
+#if ENABLED(CAPABILITIES_REPORT)
+
+#include "../gcode.h"
 #include "../queue.h"           // for getting the command port
 
 #if ENABLED(M115_GEOMETRY_REPORT)
@@ -51,20 +54,36 @@
 #endif
 
 /**
- * M115: Capabilities string and extended capabilities report
- *       If a capability is not reported, hosts should assume
- *       the capability is not present.
+ * M115: Firmware Info
+ *
+ * Capabilities string and extended capabilities report.
+ * If a capability is not reported, hosts should assume
+ * the capability is not present.
  *
  * NOTE: Always make sure to add new capabilities to the RepRap Wiki
  *       at https://reprap.org/wiki/Firmware_Capabilities_Protocol
  */
 void GcodeSuite::M115() {
 
+  // Hosts should match one of these
+  #define MACHINE_KINEMATICS "" \
+    TERN_(COREXY, "COREXY") TERN_(COREYX, "COREYX") \
+    TERN_(COREXZ, "COREXZ") TERN_(COREZX, "COREZX") \
+    TERN_(COREYZ, "COREYZ") TERN_(COREZY, "COREZY") \
+    TERN_(MARKFORGED_XY, "MARKFORGED_XY") TERN_(MARKFORGED_YX, "MARKFORGED_YX") \
+    TERN_(POLARGRAPH, "POLARGRAPH") \
+    TERN_(POLAR, "POLAR") \
+    TERN_(DELTA, "DELTA") \
+    TERN_(IS_SCARA, "SCARA") \
+    TERN_(IS_CARTESIAN, "Cartesian") \
+    TERN_(BELTPRINTER, " BELTPRINTER")
+
   SERIAL_ECHOPGM("FIRMWARE_NAME:Marlin"
     " " DETAILED_BUILD_VERSION " (" __DATE__ " " __TIME__ ")"
     " SOURCE_CODE_URL:" SOURCE_CODE_URL
     " PROTOCOL_VERSION:" PROTOCOL_VERSION
     " MACHINE_TYPE:" MACHINE_NAME
+    " KINEMATICS:" MACHINE_KINEMATICS
     " EXTRUDER_COUNT:" STRINGIFY(EXTRUDERS)
     #if NUM_AXES != XYZ
       " AXIS_COUNT:" STRINGIFY(NUM_AXES)
@@ -89,7 +108,7 @@ void GcodeSuite::M115() {
       for (uint8_t i = 0; i < 3; i++) print_hex_long(UID[i]);
     #else
       const uint16_t * const UID = (uint16_t*)UID_BASE; // Little-endian!
-      SERIAL_ECHOPGM("CEDE2A2F-");
+      SERIAL_ECHO(F("CEDE2A2F-"));
       for (uint8_t i = 1; i <= 6; i++) {
         print_hex_word(UID[(i % 2) ? i : i - 2]);       // 1111-0000-3333-222255554444
         if (i <= 3) SERIAL_CHAR('-');
@@ -120,7 +139,7 @@ void GcodeSuite::M115() {
     cap_line(F("EEPROM"), ENABLED(EEPROM_SETTINGS));
 
     // Volumetric Extrusion (M200)
-    cap_line(F("VOLUMETRIC"), DISABLED(NO_VOLUMETRICS));
+    cap_line(F("VOLUMETRIC"), ENABLED(HAS_VOLUMETRIC_EXTRUSION));
 
     // AUTOREPORT_POS (M154)
     cap_line(F("AUTOREPORT_POS"), ENABLED(AUTO_REPORT_POSITION));
@@ -138,7 +157,7 @@ void GcodeSuite::M115() {
     cap_line(F("AUTOLEVEL"), ENABLED(HAS_AUTOLEVEL));
 
     // RUNOUT (M412, M600)
-    cap_line(F("RUNOUT"), ENABLED(FILAMENT_RUNOUT_SENSOR));
+    cap_line(F("RUNOUT"), ENABLED(HAS_FILAMENT_SENSOR));
 
     // Z_PROBE (G30)
     cap_line(F("Z_PROBE"), ENABLED(HAS_BED_PROBE));
@@ -177,7 +196,7 @@ void GcodeSuite::M115() {
 
     // MULTI_VOLUME (M21 S/M21 U)
     #if HAS_MEDIA
-      cap_line(F("MULTI_VOLUME"), ENABLED(MULTI_VOLUME));
+      cap_line(F("MULTI_VOLUME"), ENABLED(HAS_MULTI_VOLUME));
     #endif
 
     // REPEAT (M808)
@@ -213,6 +232,9 @@ void GcodeSuite::M115() {
     // BABYSTEPPING (M290)
     cap_line(F("BABYSTEPPING"), ENABLED(BABYSTEPPING));
 
+    // EP_BABYSTEP (M293, M294)
+    cap_line(F("EP_BABYSTEP"), ENABLED(EP_BABYSTEPPING));
+
     // CHAMBER_TEMPERATURE (M141, M191)
     cap_line(F("CHAMBER_TEMPERATURE"), ENABLED(HAS_HEATED_CHAMBER));
 
@@ -241,13 +263,13 @@ void GcodeSuite::M115() {
         "area:{"
           "full:{"
             "min:{"
-              LIST_N(DOUBLE(NUM_AXES),
+              NUM_AXIS_PAIRED_LIST(
                  "x:", lmin.x, ",y:", lmin.y, ",z:", lmin.z,
                 ",i:", lmin.i, ",j:", lmin.j, ",k:", lmin.k,
                 ",u:", lmin.u, ",v:", lmin.v, ",w:", lmin.w
               ),
             "},max:{"
-              LIST_N(DOUBLE(NUM_AXES),
+              NUM_AXIS_PAIRED_LIST(
                  "x:", lmax.x, ",y:", lmax.y, ",z:", lmax.z,
                 ",i:", lmax.i, ",j:", lmax.j, ",k:", lmax.k,
                 ",u:", lmax.u, ",v:", lmax.v, ",w:", lmax.w
@@ -258,13 +280,13 @@ void GcodeSuite::M115() {
       SERIAL_ECHOLNPGM(
           "work:{"
             "min:{"
-              LIST_N(DOUBLE(NUM_AXES),
+              NUM_AXIS_PAIRED_LIST(
                  "x:", wmin.x, ",y:", wmin.y, ",z:", wmin.z,
                 ",i:", wmin.i, ",j:", wmin.j, ",k:", wmin.k,
                 ",u:", wmin.u, ",v:", wmin.v, ",w:", wmin.w
               ),
             "},max:{"
-              LIST_N(DOUBLE(NUM_AXES),
+              NUM_AXIS_PAIRED_LIST(
                  "x:", wmax.x, ",y:", wmax.y, ",z:", wmax.z,
                 ",i:", wmax.i, ",j:", wmax.j, ",k:", wmax.k,
                 ",u:", wmax.u, ",v:", wmax.v, ",w:", wmax.w
@@ -277,3 +299,5 @@ void GcodeSuite::M115() {
 
   #endif // EXTENDED_CAPABILITIES_REPORT
 }
+
+#endif // CAPABILITIES_REPORT

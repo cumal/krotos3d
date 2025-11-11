@@ -29,12 +29,17 @@
 #include "../../sd/cardreader.h"
 #include "../../libs/numtostr.h"
 
-#if ENABLED(DWIN_LCD_PROUI)
-  #include "../../lcd/e3v2/proui/dwin.h"
-#endif
-
 /**
- * M73: Set percentage complete (for display on LCD)
+ * M73: Set Print Progress
+ *
+ * Set next interaction countdown, current print progress
+ * percentage, and/or remaining time for display on the LCD.
+ *
+ * Parameters:
+ *   None        Report current values
+ *   C<minutes>  Set next interaction countdown
+ *   P<percent>  Set current print progress percentage (0-100)
+ *   R<minutes>  Set remaining time
  *
  * Example:
  *   M73 P25.63 ; Set progress to 25.63%
@@ -49,32 +54,24 @@
  */
 void GcodeSuite::M73() {
 
-  #if ENABLED(DWIN_LCD_PROUI)
+  #if ENABLED(SET_PROGRESS_PERCENT)
+    if (parser.seenval('P'))
+      ui.set_progress((PROGRESS_SCALE) > 1
+        ? parser.value_float() * (PROGRESS_SCALE)
+        : parser.value_byte()
+      );
+  #endif
 
-    DWIN_M73();
+  #if ENABLED(SET_REMAINING_TIME)
+    if (parser.seenval('R')) ui.set_remaining_time(60 * parser.value_ulong());
+  #endif
 
-  #else
-
-    #if ENABLED(SET_PROGRESS_PERCENT)
-      if (parser.seenval('P'))
-        ui.set_progress((PROGRESS_SCALE) > 1
-          ? parser.value_float() * (PROGRESS_SCALE)
-          : parser.value_byte()
-        );
-    #endif
-
-    #if ENABLED(SET_REMAINING_TIME)
-      if (parser.seenval('R')) ui.set_remaining_time(60 * parser.value_ulong());
-    #endif
-
-    #if ENABLED(SET_INTERACTION_TIME)
-      if (parser.seenval('C')) ui.set_interaction_time(60 * parser.value_ulong());
-    #endif
-
+  #if ENABLED(SET_INTERACTION_TIME)
+    if (parser.seenval('C')) ui.set_interaction_time(60 * parser.value_ulong());
   #endif
 
   #if ENABLED(M73_REPORT)
-    if (TERN1(M73_REPORT_SD_ONLY, IS_SD_PRINTING())) {
+    if (TERN1(M73_REPORT_SD_ONLY, card.isStillPrinting())) {
       SERIAL_ECHO_START();
       SERIAL_ECHOPGM(" M73");
       #if ENABLED(SET_PROGRESS_PERCENT)

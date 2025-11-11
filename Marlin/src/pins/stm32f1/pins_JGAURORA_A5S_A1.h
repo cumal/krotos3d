@@ -49,13 +49,13 @@
 // Enable EEPROM Emulation for this board, so that we don't overwrite factory data
 #if NO_EEPROM_SELECTED
   //#define I2C_EEPROM                            // AT24C64
-  //#define FLASH_EEPROM_EMULATION
+  #define FLASH_EEPROM_EMULATION
 #endif
 
 #if ENABLED(I2C_EEPROM)
-  //#define MARLIN_EEPROM_SIZE          0x8000UL  // 32K
+  //#define MARLIN_EEPROM_SIZE           0x8000U  // 32K
 #elif ENABLED(FLASH_EEPROM_EMULATION)
-  //#define MARLIN_EEPROM_SIZE          0x1000UL  // 4K
+  //#define MARLIN_EEPROM_SIZE           0x1000U  // 4K
   //#define MARLIN_EEPROM_SIZE (EEPROM_START_ADDRESS + (EEPROM_PAGE_SIZE) * 2UL)
 #endif
 
@@ -115,10 +115,6 @@
   #define LCD_USE_DMA_FSMC
   #define FSMC_CS_PIN                       PD7
   #define FSMC_RS_PIN                       PG0
-
-  #define FSMC_DMA_DEV                      DMA2
-  #define FSMC_DMA_CHANNEL               DMA_CH5
-
   #define TFT_CS_PIN                 FSMC_CS_PIN
   #define TFT_RS_PIN                 FSMC_RS_PIN
 

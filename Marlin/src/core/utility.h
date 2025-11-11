@@ -82,13 +82,21 @@ public:
 // in the range 0-100 while avoiding rounding artifacts
 constexpr uint8_t ui8_to_percent(const uint8_t i) { return (int(i) * 100 + 127) / 255; }
 
-// Axis names for G-code parsing, reports, etc.
-const xyze_char_t axis_codes LOGICAL_AXIS_ARRAY('E', 'X', 'Y', 'Z', AXIS4_NAME, AXIS5_NAME, AXIS6_NAME, AXIS7_NAME, AXIS8_NAME, AXIS9_NAME);
-#if NUM_AXES <= XYZ && !HAS_EXTRUDERS
-  #define AXIS_CHAR(A) ((char)('X' + A))
-  #define IAXIS_CHAR AXIS_CHAR
-#else
-  const xyze_char_t iaxis_codes LOGICAL_AXIS_ARRAY('E', 'X', 'Y', 'Z', 'I', 'J', 'K', 'U', 'V', 'W');
-  #define AXIS_CHAR(A) axis_codes[A]
-  #define IAXIS_CHAR(A) iaxis_codes[A]
+#if ENABLED(MARLIN_DEV_MODE)
+  enum MarlinError : uint8_t {
+    ERR_NONE,
+    ERR_STRING_RANGE, // A string buffer was too small to set the whole blob
+    ERR_ASSERTION,    // An assertion was triggered
+    ERR_MALFUNCTION,
+    ERR_MEMORY_LEAK,
+    ERR_COMMS_SERIAL,
+    ERR_COMMS_SPI,
+    ERR_PLANNER_STARVED,
+    ERR_TMC_SHUTDOWN,
+    ERR_PROCEDURE_FAILED,
+    ERR_TOO_WACK,
+    ERR_PLAID_IN_SUMMER
+  };
+  extern MarlinError marlin_error_number;   // Error Number - Marlin can beep, display, and emit...
+  inline void error(const MarlinError err) { marlin_error_number = err; }
 #endif

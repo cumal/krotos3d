@@ -45,7 +45,7 @@
 // Onboard I2C EEPROM
 //
 #define IIC_BL24CXX_EEPROM                // Use I2C EEPROM onboard IC (AT24C04C, Size 4K, PageSize 16B)
-#define MARLIN_EEPROM_SIZE                0x1000  // 4K
+#define MARLIN_EEPROM_SIZE               0x1000U  // 4K
 #define IIC_EEPROM_SDA                      PB7
 #define IIC_EEPROM_SCL                      PB6
 #define EEPROM_DEVICE_ADDRESS             0xA0
@@ -262,6 +262,8 @@
 #define EXP2_07_PIN                         PG3
 #define EXP2_08_PIN                         -1    // RESET
 
+#define EXP_REVERSE_KEYED
+
 /**                -------
  *                |     0 | DGND-|
  *           3V3  |  1  2 | DGND-|
@@ -332,19 +334,14 @@
    * Setting a 'TFT_RESET_PIN' may cause a flicker when switching menus
    * because Marlin uses the reset as a failsafe to revive a glitchy LCD.
    */
-  #define TFT_RESET_PIN            LCD_RESET_PIN
-  #define TFT_BACKLIGHT_PIN    LCD_BACKLIGHT_PIN
+  #define TFT_RESET_PIN              FSMC_23_PIN
+  #define TFT_BACKLIGHT_PIN          FSMC_24_PIN
 
-  #define FSMC_DMA_DEV                      DMA2
-  #define FSMC_DMA_CHANNEL               DMA_CH5
   #define LCD_USE_DMA_FSMC
   #define FSMC_CS_PIN                FSMC_19_PIN  // NE4
   #define FSMC_RS_PIN                FSMC_20_PIN  // A0
   #define TFT_CS_PIN                 FSMC_CS_PIN
   #define TFT_RS_PIN                 FSMC_RS_PIN
-
-  #define LCD_RESET_PIN              FSMC_23_PIN
-  #define LCD_BACKLIGHT_PIN          FSMC_24_PIN
 
   #define TFT_BUFFER_WORDS                 14400
 

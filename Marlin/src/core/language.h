@@ -55,6 +55,7 @@
 // eu         Basque-Euskera
 // fi         Finnish
 // fr         French
+// fr_na      French without accents (DWIN T5UID1 touchscreen)
 // gl         Galician
 // hr         Croatian
 // hu         Hungarian
@@ -87,6 +88,7 @@
   #undef  MACHINE_NAME
   #define MACHINE_NAME DEFAULT_MACHINE_NAME
 #endif
+#define MACHINE_NAME_SUBST TERN(CONFIGURABLE_MACHINE_NAME, "$", MACHINE_NAME)
 
 #define MARLIN_WEBSITE_URL "marlinfw.org"
 
@@ -134,6 +136,7 @@
 #define STR_BUSY_PAUSED_FOR_USER            "busy: paused for user"
 #define STR_BUSY_PAUSED_FOR_INPUT           "busy: paused for input"
 #define STR_Z_MOVE_COMP                     "Z_move_comp"
+#define STR_LINE_NO                         "Line: "
 #define STR_RESEND                          "Resend: "
 #define STR_UNKNOWN_COMMAND                 "Unknown command: \""
 #define STR_ACTIVE_EXTRUDER                 "Active Extruder: "
@@ -160,8 +163,8 @@
 #define STR_SOFT_MIN                        "  Min: "
 #define STR_SOFT_MAX                        "  Max: "
 
-#define STR_SAVED_POS                       "Position saved"
-#define STR_RESTORING_POS                   "Restoring position"
+#define STR_SAVED_POSITION                  "Saved position #"
+#define STR_RESTORING_POSITION              "Restoring position #"
 #define STR_INVALID_POS_SLOT                "Invalid slot. Total: "
 #define STR_DONE                            "Done."
 
@@ -189,6 +192,7 @@
 #define STR_ERR_HOTEND_TOO_COLD             "Hotend too cold"
 #define STR_ERR_EEPROM_WRITE                "Error writing to EEPROM!"
 #define STR_ERR_EEPROM_CORRUPT              "EEPROM Corrupt"
+#define STR_EEPROM_INITIALIZED              "EEPROM Initialized"
 
 #define STR_FILAMENT_CHANGE_HEAT_LCD        "Press button to heat nozzle"
 #define STR_FILAMENT_CHANGE_INSERT_LCD      "Insert filament and press button"
@@ -226,10 +230,9 @@
 #define STR_PID_DEBUG_INPUT                 ": Input "
 #define STR_PID_DEBUG_OUTPUT                " Output "
 #define STR_INVALID_EXTRUDER_NUM            " - Invalid extruder number !"
-#define STR_MPC_AUTOTUNE                    "MPC Autotune"
-#define STR_MPC_AUTOTUNE_START              " start for " STR_E
-#define STR_MPC_AUTOTUNE_INTERRUPTED        " interrupted!"
-#define STR_MPC_AUTOTUNE_FINISHED           " finished! Put the constants below into Configuration.h"
+#define STR_MPC_AUTOTUNE_START              "MPC Autotune start for " STR_E
+#define STR_MPC_AUTOTUNE_INTERRUPTED        "MPC Autotune interrupted!"
+#define STR_MPC_AUTOTUNE_FINISHED           "MPC Autotune finished! Put the constants below into Configuration.h"
 #define STR_MPC_COOLING_TO_AMBIENT          "Cooling to ambient"
 #define STR_MPC_HEATING_PAST_200            "Heating to over 200C"
 #define STR_MPC_MEASURING_AMBIENT           "Measuring ambient heatloss at "
@@ -239,15 +242,18 @@
 #define STR_HEATER_CHAMBER                  "chamber"
 #define STR_COOLER                          "cooler"
 #define STR_MOTHERBOARD                     "motherboard"
+#define STR_SOC                             "soc"
 #define STR_PROBE                           "probe"
 #define STR_REDUNDANT                       "redundant "
 #define STR_LASER_TEMP                      "laser temperature"
 
 #define STR_STOPPED_HEATER                  ", system stopped! Heater_ID: "
+#define STR_DETECTED_TEMP_B                 " (temp: "
+#define STR_DETECTED_TEMP_E                 ")"
 #define STR_REDUNDANCY                      "Heater switched off. Temperature difference between temp sensors is too high !"
 #define STR_T_HEATING_FAILED                "Heating failed"
 #define STR_T_THERMAL_RUNAWAY               "Thermal Runaway"
-#define STR_T_MALFUNCTION                   "Thermal Malfunction"
+#define STR_T_THERMAL_MALFUNCTION           "Thermal Malfunction"
 #define STR_T_MAXTEMP                       "MAXTEMP triggered"
 #define STR_T_MINTEMP                       "MINTEMP triggered"
 #define STR_ERR_PROBING_FAILED              "Probing Failed"
@@ -273,9 +279,11 @@
 // Settings Report Strings
 #define STR_Z_AUTO_ALIGN                    "Z Auto-Align"
 #define STR_BACKLASH_COMPENSATION           "Backlash compensation"
+#define STR_FT_MOTION                       "Fixed-Time Motion"
 #define STR_S_SEG_PER_SEC                   "S<seg-per-sec>"
 #define STR_DELTA_SETTINGS                  "Delta (L<diagonal-rod> R<radius> H<height> S<seg-per-sec> XYZ<tower-angle-trim> ABC<rod-trim>)"
 #define STR_SCARA_SETTINGS                  "SCARA"
+#define STR_POLAR_SETTINGS                  "Polar"
 #define STR_POLARGRAPH_SETTINGS             "Polargraph"
 #define STR_SCARA_P_T_Z                     "P<theta-psi-offset> T<theta-offset> Z<home-offset>"
 #define STR_ENDSTOP_ADJUSTMENT              "Endstop adjustment"
@@ -284,14 +292,17 @@
 #define STR_MAX_ACCELERATION                "Max Acceleration (units/s2)"
 #define STR_MAX_FEEDRATES                   "Max feedrates (units/s)"
 #define STR_ACCELERATION_P_R_T              "Acceleration (units/s2) (P<print-accel> R<retract-accel> T<travel-accel>)"
+#define STR_HOMING_FEEDRATE                 "Homing Feedrate"
 #define STR_TOOL_CHANGING                   "Tool-changing"
 #define STR_HOTEND_OFFSETS                  "Hotend offsets"
 #define STR_SERVO_ANGLES                    "Servo Angles"
+#define STR_AUTOTEMP                        "Auto Temp Control"
 #define STR_HOTEND_PID                      "Hotend PID"
 #define STR_BED_PID                         "Bed PID"
 #define STR_CHAMBER_PID                     "Chamber PID"
 #define STR_STEPS_PER_UNIT                  "Steps per unit"
 #define STR_LINEAR_ADVANCE                  "Linear Advance"
+#define STR_NONLINEAR_EXTRUSION             "Nonlinear Extrusion"
 #define STR_CONTROLLER_FAN                  "Controller Fan"
 #define STR_STEPPER_MOTOR_CURRENTS          "Stepper motor currents"
 #define STR_RETRACT_S_F_Z                   "Retract (S<length> F<feedrate> Z<lift>)"
@@ -302,8 +313,9 @@
 #define STR_FILAMENT_RUNOUT_SENSOR          "Filament runout sensor"
 #define STR_DRIVER_STEPPING_MODE            "Driver stepping mode"
 #define STR_STEPPER_DRIVER_CURRENT          "Stepper driver current"
+#define STR_HOMING_CURRENT                  "Homing Current (mA)"
 #define STR_HYBRID_THRESHOLD                "Hybrid Threshold"
-#define STR_STALLGUARD_THRESHOLD            "StallGuard threshold"
+#define STR_STALLGUARD_THRESHOLD            "StallGuard Threshold"
 #define STR_HOME_OFFSET                     "Home offset"
 #define STR_SOFT_ENDSTOPS                   "Soft endstops"
 #define STR_MATERIAL_HEATUP                 "Material heatup parameters"
@@ -315,6 +327,53 @@
 #define STR_TEMPERATURE_UNITS               "Temperature Units"
 #define STR_USER_THERMISTORS                "User thermistors"
 #define STR_DELAYED_POWEROFF                "Delayed poweroff"
+#define STR_STORED_MACROS                   "Stored macros"
+
+//
+// General axis names
+//
+#if HAS_X_AXIS
+  #define AXIS1_NAME 'X'
+#endif
+#if HAS_Y_AXIS
+  #define AXIS2_NAME 'Y'
+#endif
+#if HAS_Z_AXIS
+  #define AXIS3_NAME 'Z'
+#endif
+#define STR_X "X"
+#define STR_Y "Y"
+#define STR_Z "Z"
+#define STR_E "E"
+#if IS_KINEMATIC
+  #define STR_A "A"
+  #define STR_B "B"
+  #define STR_C "C"
+#else
+  #define STR_A STR_X
+  #define STR_B STR_Y
+  #define STR_C STR_Z
+#endif
+#define STR_X2 STR_A "2"
+#define STR_Y2 STR_B "2"
+#define STR_Z2 STR_C "2"
+#define STR_Z3 STR_C "3"
+#define STR_Z4 STR_C "4"
+#if CORE_IS_XY || CORE_IS_XZ
+  #define STEPPER_A_NAME 'A'
+#else
+  #define STEPPER_A_NAME 'X'
+#endif
+#if CORE_IS_XY || CORE_IS_YZ
+  #define STEPPER_B_NAME 'B'
+#else
+  #define STEPPER_B_NAME 'Y'
+#endif
+#if CORE_IS_XZ || CORE_IS_YZ
+  #define STEPPER_C_NAME 'C'
+#else
+  #define STEPPER_C_NAME 'Z'
+#endif
 
 //
 // Endstop Names used by Endstops::report_states
@@ -347,26 +406,7 @@
 #define STR_Z_PROBE                         "z_probe"
 #define STR_PROBE_EN                        "probe_en"
 #define STR_FILAMENT                        "filament"
-
-// General axis names
-#define STR_X "X"
-#define STR_Y "Y"
-#define STR_Z "Z"
-#define STR_E "E"
-#if IS_KINEMATIC
-  #define STR_A "A"
-  #define STR_B "B"
-  #define STR_C "C"
-#else
-  #define STR_A "X"
-  #define STR_B "Y"
-  #define STR_C "Z"
-#endif
-#define STR_X2 "X2"
-#define STR_Y2 "Y2"
-#define STR_Z2 "Z2"
-#define STR_Z3 "Z3"
-#define STR_Z4 "Z4"
+#define STR_CALIBRATION                     "calibration"
 
 // Extra Axis and Endstop Names
 #if HAS_I_AXIS

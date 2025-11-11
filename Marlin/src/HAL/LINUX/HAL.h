@@ -26,6 +26,11 @@
 #include <iostream>
 #include <stdint.h>
 #include <stdarg.h>
+
+#ifdef HAS_LIBBSD
+  #include <bsd/string.h>
+#endif
+
 #undef min
 #undef max
 #include <algorithm>
@@ -119,7 +124,7 @@ public:
   static void isr_on()  {}
   static void isr_off() {}
 
-  static void delay_ms(const int ms) { _delay_ms(ms); }
+  static void delay_ms(const int ms) { delay(ms); }
 
   // Tasks, called from idle()
   static void idletask() {}
@@ -162,4 +167,13 @@ public:
   }
 
   static void set_pwm_frequency(const pin_t, int) {}
+
+  #ifndef HAS_LIBBSD
+    /**
+     * Redirect missing strlcpy here
+     */
+    static size_t _strlcpy(char *dst, const char *src, size_t dsize);
+    #define strlcpy hal._strlcpy
+  #endif
+
 };

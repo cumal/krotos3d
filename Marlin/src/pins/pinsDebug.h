@@ -176,11 +176,11 @@ const PinInfo pin_array[] PROGMEM = {
 bool pin_is_protected(const pin_t pin);
 
 static void printPinIOState(const bool isout) {
-  SERIAL_ECHOF(isout ? F("Output ") : F("Input  "));
+  SERIAL_ECHO(isout ? F("Output ") : F("Input  "));
 }
 
 static void printPinState(const bool state) {
-  SERIAL_ECHOF(state ? F("HIGH") : F("LOW"));
+  SERIAL_ECHO(state ? F("HIGH") : F("LOW"));
 }
 
 // pretty report with PWM info
@@ -191,14 +191,14 @@ inline void printPinStateExt(const pin_t pin, const bool ignore, const bool exte
   auto alt_pin_echo = [](const pin_t &pin) {
     #if AVR_AT90USB1286_FAMILY
       // Use FastIO for pins Teensy doesn't expose
-      if (pin == 46) {
-        printPinIOState(IS_OUTPUT(46));
-        printPinState(READ(46));
+      if (pin == PIN_E2) {
+        printPinIOState(IS_OUTPUT(PIN_E2));
+        printPinState(READ(PIN_E2));
         return false;
       }
-      else if (pin == 47) {
-        printPinIOState(IS_OUTPUT(47));
-        printPinState(READ(47));
+      else if (pin == PIN_E3) {
+        printPinIOState(IS_OUTPUT(PIN_E3));
+        printPinState(READ(PIN_E3));
         return false;
       }
     #endif
@@ -208,7 +208,7 @@ inline void printPinStateExt(const pin_t pin, const bool ignore, const bool exte
   for (uint8_t x = 0; x < COUNT(pin_array); ++x)  {    // scan entire array and report all instances of this pin
     if (getPinByIndex(x) == pin) {
       if (!found) {    // report digital and analog pin number only on the first time through
-        if (start_string) SERIAL_ECHOF(start_string);
+        if (start_string) SERIAL_ECHO(start_string);
         SERIAL_ECHOPGM("PIN: ");
         printPinNumber(pin);
         printPinPort(pin);
@@ -256,7 +256,7 @@ inline void printPinStateExt(const pin_t pin, const bool ignore, const bool exte
   } // end of for loop
 
   if (!found) {
-    if (start_string) SERIAL_ECHOF(start_string);
+    if (start_string) SERIAL_ECHO(start_string);
     SERIAL_ECHOPGM("PIN: ");
     printPinNumber(pin);
     printPinPort(pin);
