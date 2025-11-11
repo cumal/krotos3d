@@ -61,7 +61,7 @@
      * Prepare a mesh-leveled linear move in a Cartesian setup,
      * splitting the move where it crosses mesh borders.
      */
-    void mesh_bed_leveling::line_to_destination(const_feedRate_t scaled_fr_mm_s, uint8_t x_splits, uint8_t y_splits) {
+    void mesh_bed_leveling::line_to_destination(const feedRate_t scaled_fr_mm_s, uint8_t x_splits, uint8_t y_splits) {
       // Get current and destination cells for this line
       xy_uint8_t scel = cell_indexes(current_position), ecel = cell_indexes(destination);
       NOMORE(scel.x, GRID_MAX_CELLS_X - 1);
@@ -123,8 +123,7 @@
   #endif // IS_CARTESIAN && !SEGMENT_LEVELED_MOVES
 
   void mesh_bed_leveling::report_mesh() {
-    SERIAL_ECHOPAIR_F(STRINGIFY(GRID_MAX_POINTS_X) "x" STRINGIFY(GRID_MAX_POINTS_Y) " mesh. Z offset: ", z_offset, 5);
-    SERIAL_ECHOLNPGM("\nMeasured points:");
+    SERIAL_ECHOLN(F(STRINGIFY(GRID_MAX_POINTS_X) "x" STRINGIFY(GRID_MAX_POINTS_Y) " mesh. Z offset: "), p_float_t(z_offset, 5), F("\nMeasured points:"));
     print_2d_array(GRID_MAX_POINTS_X, GRID_MAX_POINTS_Y, 5, z_values[0]);
   }
 

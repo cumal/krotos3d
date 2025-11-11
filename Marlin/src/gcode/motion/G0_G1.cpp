@@ -35,6 +35,10 @@
   #include "../../module/planner.h"
 #endif
 
+#if ENABLED(SOVOL_SV06_RTS)
+  #include "../../lcd/sovol_rts/sovol_rts.h"
+#endif
+
 extern xyze_pos_t destination;
 
 #if ENABLED(VARIABLE_G0_FEEDRATE)
@@ -72,7 +76,7 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
     }
   #endif
 
-  #if BOTH(FWRETRACT, FWRETRACT_AUTORETRACT)
+  #if ALL(FWRETRACT, FWRETRACT_AUTORETRACT)
 
     if (MIN_AUTORETRACT <= MAX_AUTORETRACT) {
       // When M209 Autoretract is enabled, convert E-only moves to firmware retract/recover moves
@@ -82,16 +86,17 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
         const float echange = destination.e - current_position.e;
         // Is this a retract or recover move?
         if (WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT) && fwretract.retracted[active_extruder] == (echange > 0.0)) {
-          current_position.e = destination.e;       // Hide a G1-based retract/recover from calculations
-          sync_plan_position_e();                   // AND from the planner
-          return fwretract.retract(echange < 0.0);  // Firmware-based retract/recover (double-retract ignored)
+          current_position.e = destination.e;    // Hide a G1-based retract/recover from calculations
+          sync_plan_position_e();                // AND from the planner
+          fwretract.retract(echange < 0.0);      // Firmware-based retract/recover (double-retract ignored)
+          return;
         }
       }
     }
 
   #endif // FWRETRACT
 
-  #if IS_SCARA
+  #if ANY(IS_SCARA, POLAR)
     fast_move ? prepare_fast_move_to_destination() : prepare_line_to_destination();
   #else
     prepare_line_to_destination();
@@ -116,4 +121,6 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
   #else
     TERN_(FULL_REPORT_TO_HOST_FEATURE, report_current_grblstate_moving());
   #endif
+
+  TERN_(SOVOL_SV06_RTS, RTS_PauseMoveAxisPage());
 }

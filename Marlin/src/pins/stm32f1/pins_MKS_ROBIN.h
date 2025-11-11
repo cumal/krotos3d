@@ -53,10 +53,12 @@
 #endif
 
 #if ENABLED(FLASH_EEPROM_EMULATION)
-  #define EEPROM_PAGE_SIZE     (0x800U) // 2K
+  #define EEPROM_PAGE_SIZE                0x800U  // 2K
   #define EEPROM_START_ADDRESS (0x8000000UL + (STM32_FLASH_SIZE) * 1024UL - (EEPROM_PAGE_SIZE) * 2UL)
-  #define MARLIN_EEPROM_SIZE (EEPROM_PAGE_SIZE)
+  #define MARLIN_EEPROM_SIZE    EEPROM_PAGE_SIZE  // 2K
 #endif
+
+#define BOARD_LCD_SERIAL_PORT 2
 
 //
 // Servos
@@ -179,9 +181,6 @@
   #define LCD_USE_DMA_FSMC
   #define FSMC_CS_PIN                       PG12  // NE4
   #define FSMC_RS_PIN                       PF0   // A0
-  #define FSMC_DMA_DEV                      DMA2
-  #define FSMC_DMA_CHANNEL               DMA_CH5
-
   #define TFT_CS_PIN                 FSMC_CS_PIN
   #define TFT_RS_PIN                 FSMC_RS_PIN
 
@@ -228,14 +227,13 @@
   #define SD_SCK_PIN                        PC12
   #define SD_MISO_PIN                       PC8
   #define SD_MOSI_PIN                       PD2
-  #define SD_SS_PIN                         -1
   #define ONBOARD_SD_CS_PIN                 PC11
-  #define SDSS                              PD2
+  #define SD_SS_PIN                         PD2
   #define SD_DETECT_PIN                     -1
 #endif
 
 //
-// Trinamic TMC2208/2209 UART
+// Trinamic TMC2208/TMC2209 UART
 //
 #if HAS_TMC_UART
   /**

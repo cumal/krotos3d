@@ -77,7 +77,7 @@ void set_bed_leveling_enabled(const bool enable/*=true*/) {
 
     // Get the corrected leveled / unleveled position
     planner.apply_modifiers(current_position, true);    // Physical position with all modifiers
-    planner.leveling_active ^= true;                    // Toggle leveling between apply and unapply
+    FLIP(planner.leveling_active);                      // Toggle leveling between apply and unapply
     planner.unapply_modifiers(current_position, true);  // Logical position with modifiers removed
 
     sync_plan_position();
@@ -91,7 +91,7 @@ TemporaryBedLevelingState::TemporaryBedLevelingState(const bool enable) : saved(
 
 #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
 
-  void set_z_fade_height(const_float_t zfh, const bool do_report/*=true*/) {
+  void set_z_fade_height(const float zfh, const bool do_report/*=true*/) {
 
     if (planner.z_fade_height == zfh) return;
 
@@ -138,7 +138,7 @@ void reset_bed_level() {
   void print_2d_array(const uint8_t sx, const uint8_t sy, const uint8_t precision, const float *values) {
     #ifndef SCAD_MESH_OUTPUT
       for (uint8_t x = 0; x < sx; ++x) {
-        serial_spaces(precision + (x < 10 ? 3 : 2));
+        SERIAL_ECHO_SP(precision + (x < 10 ? 3 : 2));
         SERIAL_ECHO(x);
       }
       SERIAL_EOL();
@@ -158,7 +158,7 @@ void reset_bed_level() {
         const float offset = values[x * sy + y];
         if (!isnan(offset)) {
           if (offset >= 0) SERIAL_CHAR('+');
-          SERIAL_ECHO_F(offset, int(precision));
+          SERIAL_ECHO(p_float_t(offset, precision));
         }
         else {
           #ifdef SCAD_MESH_OUTPUT
