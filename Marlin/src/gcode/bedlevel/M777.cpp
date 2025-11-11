@@ -39,7 +39,7 @@
 // Custom parameters
 #define MAXREPETITIONS 5
 #define MAXOFFSET 2 // correspond to 0.2 see (1)
-#define Z_MOTORS_POS { { 20, 200 } , { 20, 40 } , { 160 , 200 } , { 160 , 40 } }
+#define Z_MOTORS_POS { { 20, Y_BED_SIZE-30 } , { 20, 40 } , { X_BED_SIZE-70 , Y_BED_SIZE-30 } , { X_BED_SIZE-70 , 40 } }
 
 /**
  * M777: Hardware bed leveling
@@ -95,14 +95,14 @@ int getDesviation(){
   gcode.process_subcommands_now("G91"); // Relative positioning
   if (digitalRead(Z_MIN_PIN) == LOW) { // Endpoint triggered. Go down
     while (digitalRead(Z_MIN_PIN) == LOW){
-      gcode.process_subcommands_now("G1 Z0.1 F500");
+      gcode.process_subcommands_now("G1 Z0.1");
       planner.synchronize();
       measuredDesv = measuredDesv - 1; // Use 1 instead of 0.1 to avoid float errors (1)
     }
     measuredDesv = measuredDesv + 1; // last move goes out height
   } else { // Endpoint not triggered. Go up
     while (digitalRead(Z_MIN_PIN) != LOW){
-      gcode.process_subcommands_now("G1 Z-0.1 F500");
+      gcode.process_subcommands_now("G1 Z-0.1");
       planner.synchronize();
       measuredDesv = measuredDesv + 1; // Use 1 instead of 0.1 to avoid float errors (1)
     }
@@ -129,7 +129,7 @@ float getMax(int array[]){
 
 void aBitDown(){
   gcode.process_subcommands_now("G91"); // Relative positioning
-  gcode.process_subcommands_now("G1 Z5 F500");
+  gcode.process_subcommands_now("G1 Z5");
   planner.synchronize();
   gcode.process_subcommands_now("G90"); // Absolute positioning
 }
@@ -163,7 +163,7 @@ void GcodeSuite::M777() {
     planner.synchronize(); // Wait move to finish
     for (int i = 0; i < 4; i++) {
       gcode.process_subcommands_now("G90"); // Absolute positioning
-      sprintf_P(cmd, PSTR("G1X%sY%sZ0F1300"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
+      sprintf_P(cmd, PSTR("G1X%sY%sZ0"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
       gcode.process_subcommands_now(cmd); // Move to measure position
       planner.synchronize();
       motDesv[i] = getDesviation(); // Gets the height difference
@@ -171,6 +171,8 @@ void GcodeSuite::M777() {
     for (int i = 0; i < 4; i++) {
       moveMotor(i, motDesv[i]); // fix height
     }
+    gcode.process_subcommands_now("G91"); // Relative positioning
+    gcode.process_subcommands_now("G1Z5");
     printDesviationSummary(motDesv);
     heightDiff = (getMax(motDesv) - getMin(motDesv));
     if ( (heightDiff <= MAXOFFSET) || (repTimes == MAXREPETITIONS) ) {

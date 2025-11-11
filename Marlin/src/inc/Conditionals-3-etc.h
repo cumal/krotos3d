@@ -503,7 +503,7 @@
 #if ANY(AUTO_BED_LEVELING_LINEAR, AUTO_BED_LEVELING_BILINEAR)
   #define ABL_USES_GRID 1
   #ifndef XY_PROBE_FEEDRATE_MIN
-    #define XY_PROBE_FEEDRATE_MIN 60 // Minimum mm/min value for 'G29 S<feedrate>'
+    #define XY_PROBE_FEEDRATE_MIN 40 // Minimum mm/min value for 'G29 S<feedrate>'
   #endif
 #endif
 #if ANY(AUTO_BED_LEVELING_LINEAR, AUTO_BED_LEVELING_BILINEAR, AUTO_BED_LEVELING_3POINT)
