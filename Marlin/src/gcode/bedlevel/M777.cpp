@@ -135,24 +135,23 @@ void aBitDown(){
 }
 
 void printDesviationSummary(int items[]) {
-  SERIAL_ECHO("Desviation summary: ");
-  SERIAL_ECHO(items[0]);
-  SERIAL_ECHO(", ");
-  SERIAL_ECHO(items[1]);
-  SERIAL_ECHO(", ");
-  SERIAL_ECHO(items[2]);
-  SERIAL_ECHO(", ");
-  SERIAL_ECHOLN(items[3]);
+  SERIAL_ECHOLN("Desviation summary: ", items[0], ",", items[1], ",", items[2], ",", items[3]);
 }
  
 void GcodeSuite::M777() {
-  SERIAL_ECHOLN("Starting HW bed leveling...");
+  int iter;
+  if (parser.seenval('R')) {
+    iter = parser.value_int();
+  } else {
+    iter = MAXREPETITIONS;
+  }
+  SERIAL_ECHOLN("Starting HW bed leveling. R:", iter);
   float probe_z_offset = probe.offset.z; // Gets z probe offset
   gcode.process_subcommands_now("M851 Z0"); // Removes Z probe offset
   gcode.process_subcommands_now("G90"); // Absolute positioning
   gcode.process_subcommands_now("G28 X Y"); // Home XY
   planner.synchronize();
-  int repTimes = 0;
+  int repTimes = 1;
   bool run = true;
   xy_pos_t motPosition[4] = Z_MOTORS_POS;
   char cmd[20], str_1[16], str_2[16];
@@ -172,23 +171,16 @@ void GcodeSuite::M777() {
       moveMotor(i, motDesv[i]); // fix height
     }
     gcode.process_subcommands_now("G91"); // Relative positioning
-    gcode.process_subcommands_now("G1Z5");
-    printDesviationSummary(motDesv);
+    gcode.process_subcommands_now("G1Z10");
+    //printDesviationSummary(motDesv);
     heightDiff = (getMax(motDesv) - getMin(motDesv));
-    if ( (heightDiff <= MAXOFFSET) || (repTimes == MAXREPETITIONS) ) {
+    if ( (heightDiff <= MAXOFFSET) || (repTimes == iter) ) {
       run = false;
-      SERIAL_ECHO("Maximun: ");
-      SERIAL_ECHO(heightDiff);
-      SERIAL_ECHO("/");
-      SERIAL_ECHOLN(MAXOFFSET);
-      SERIAL_ECHO("Repetitions: ");
-      SERIAL_ECHO(repTimes);
-      SERIAL_ECHO("/");
-      SERIAL_ECHOLN(MAXREPETITIONS);
+    } else {
+      repTimes=repTimes+1;
     }
-    repTimes=repTimes+1;
   }
   sprintf_P(cmd, PSTR("M851Z%s"), dtostrf(probe_z_offset, 6, 2, str_1)); // Restore Z probe offset
   gcode.process_subcommands_now(cmd); // Move to measure position
-  SERIAL_ECHOLN("Ended HW bed leveling.");
+  SERIAL_ECHOLN("Ended HW bed leveling. Diff:", heightDiff, " Reps:", repTimes);
 }
