@@ -59,7 +59,7 @@
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../../../core/debug_out.h"
 
-#if DISABLED(PROBE_MANUALLY) && ENABLED(FT_MOTION)
+#if DISABLED(PROBE_MANUALLY) && FT_MOTION_DISABLE_FOR_PROBING
   #include "../../../module/ft_motion.h"
 #endif
 
@@ -275,9 +275,8 @@ G29_TYPE GcodeSuite::G29() {
   // Set and report "probing" state to host
   TERN_(FULL_REPORT_TO_HOST_FEATURE, set_and_report_grblstate(M_PROBE, false));
 
-  #if DISABLED(PROBE_MANUALLY)
-    // Potentially disable Fixed-Time Motion for probing
-    TERN_(FT_MOTION, FTM_DISABLE_IN_SCOPE());
+  #if DISABLED(PROBE_MANUALLY) && FT_MOTION_DISABLE_FOR_PROBING
+    FTMotionDisableInScope FT_Disabler; // Disable Fixed-Time Motion for probing
   #endif
 
   /**
@@ -709,7 +708,7 @@ G29_TYPE GcodeSuite::G29() {
           if (TERN0(IS_KINEMATIC, !probe.can_reach(abl.probePos))) continue;
 
           if (abl.verbose_level) SERIAL_ECHOLNPGM("Probing mesh point ", pt_index, "/", abl.abl_points, ".");
-          TERN_(HAS_STATUS_MESSAGE, ui.status_printf(0, F(S_FMT " %i/%i"), GET_TEXT(MSG_PROBING_POINT), int(pt_index), int(abl.abl_points)));
+          TERN_(HAS_STATUS_MESSAGE, ui.status_printf(0, F(S_FMT " %i/%i"), GET_TEXT_F(MSG_PROBING_POINT), int(pt_index), int(abl.abl_points)));
 
           #if ENABLED(BD_SENSOR_PROBE_NO_STOP)
             if (PR_INNER_VAR == inStart) {
@@ -814,7 +813,7 @@ G29_TYPE GcodeSuite::G29() {
 
       for (uint8_t i = 0; i < 3; ++i) {
         if (abl.verbose_level) SERIAL_ECHOLNPGM("Probing point ", i + 1, "/3.");
-        TERN_(HAS_STATUS_MESSAGE, ui.status_printf(0, F(S_FMT " %i/3"), GET_TEXT(MSG_PROBING_POINT), int(i + 1)));
+        TERN_(HAS_STATUS_MESSAGE, ui.status_printf(0, F(S_FMT " %i/3"), GET_TEXT_F(MSG_PROBING_POINT), int(i + 1)));
 
         // Retain the last probe position
         abl.probePos = xy_pos_t(points[i]);

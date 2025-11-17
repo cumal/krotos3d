@@ -94,7 +94,7 @@ void GcodeSuite::M706() {
  *   M707 [ A ]
  *
  * Parameters:
- *   A<hex>  Address of register in hexadecimal
+ *   A<hex>  Address of register in hexidecimal
  *
  * Example:
  *   M707 A0x1b - Read a 8bit integer from register 0x1b and prints the result onto the serial line.
@@ -115,7 +115,7 @@ void GcodeSuite::M707() {
  *   M708 [ A | X ]
  *
  * Parameters:
- *   A<hex>  Address of register in hexadecimal
+ *   A<hex>  Address of register in hexidecimal
  *   X<int>  Data to write (16-bit integer). Default value 0
  *
  * Example:

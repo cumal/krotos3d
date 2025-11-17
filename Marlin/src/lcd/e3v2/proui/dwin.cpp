@@ -200,7 +200,7 @@ typedef struct {
 select_t select_page{0}, select_print{0};
 
 #if ENABLED(LCD_BED_TRAMMING)
-  constexpr float bed_tramming_inset_lfrb[] = BED_TRAMMING_INSET_LFRB;
+  constexpr float bed_tramming_inset_lfbr[] = BED_TRAMMING_INSET_LFRB;
 #endif
 
 bool hash_changed = true; // Flag to know if message status was changed
@@ -1567,7 +1567,7 @@ void dwinLevelingDone() {
 }
 
 #if HAS_MESH
-  void dwinMeshUpdate(const int8_t cpos, const int8_t tpos, const float zval) {
+  void dwinMeshUpdate(const int8_t cpos, const int8_t tpos, const_float_t zval) {
     ui.set_status(
       &MString<32>(GET_TEXT_F(MSG_PROBING_POINT), ' ', cpos, '/', tpos, F(" Z="), p_float_t(zval, 2))
     );
@@ -2169,13 +2169,13 @@ void autoHome() { queue.inject_P(G28_STR); }
   void applyZOffset() { TERN_(EEPROM_SETTINGS, settings.save()); }
   void liveZOffset() {
     #if ANY(BABYSTEP_ZPROBE_OFFSET, JUST_BABYSTEP)
-      const float step_zoffset = roundf((menuData.value * 0.01f) * planner.settings.axis_steps_per_mm[Z_AXIS]) - babystep.accum;
+      const_float_t step_zoffset = round((menuData.value / 100.0f) * planner.settings.axis_steps_per_mm[Z_AXIS]) - babystep.accum;
       if (BABYSTEP_ALLOWED()) babystep.add_steps(Z_AXIS, step_zoffset);
     #endif
   }
   void setZOffset() {
     #if ANY(BABYSTEP_ZPROBE_OFFSET, JUST_BABYSTEP)
-      babystep.accum = LROUND(planner.settings.axis_steps_per_mm[Z_AXIS] * BABY_Z_VAR);
+      babystep.accum = round(planner.settings.axis_steps_per_mm[Z_AXIS] * BABY_Z_VAR);
     #endif
     setPFloatOnClick(PROBE_OFFSET_ZMIN, PROBE_OFFSET_ZMAX, 2, applyZOffset, liveZOffset);
   }
@@ -2304,7 +2304,7 @@ void setMoveZ() { hmiValue.axis = Z_AXIS; setPFloatOnClick(Z_MIN_POS, Z_MAX_POS,
   #if HAS_COLOR_LEDS
     bool enableLiveLedColor = true;
     void applyLEDColor() {
-      hmiData.ledColor = LED1Color_t(leds.color.r, leds.color.g, leds.color.b OPTARG(HAS_WHITE_LED, hmiData.ledColor.w));
+      hmiData.ledColor = LEDColor( {leds.color.r, leds.color.g, leds.color.b OPTARG(HAS_WHITE_LED, hmiData.ledColor.w) } );
       if (!enableLiveLedColor) leds.update();
     }
     void liveLEDColor(uint8_t *color) { *color = menuData.value; if (enableLiveLedColor) leds.update(); }
@@ -2435,23 +2435,23 @@ void setFlow() { setPIntOnClick(FLOW_EDIT_MIN, FLOW_EDIT_MAX, []{ planner.refres
     switch (point) {
       case 0:
         LCD_MESSAGE(MSG_TRAM_FL);
-        x = bed_tramming_inset_lfrb[0];
-        y = bed_tramming_inset_lfrb[1];
+        x = bed_tramming_inset_lfbr[0];
+        y = bed_tramming_inset_lfbr[1];
         break;
       case 1:
         LCD_MESSAGE(MSG_TRAM_FR);
-        x = X_BED_SIZE - bed_tramming_inset_lfrb[2];
-        y = bed_tramming_inset_lfrb[1];
+        x = X_BED_SIZE - bed_tramming_inset_lfbr[2];
+        y = bed_tramming_inset_lfbr[1];
         break;
       case 2:
         LCD_MESSAGE(MSG_TRAM_BR);
-        x = X_BED_SIZE - bed_tramming_inset_lfrb[2];
-        y = Y_BED_SIZE - bed_tramming_inset_lfrb[3];
+        x = X_BED_SIZE - bed_tramming_inset_lfbr[2];
+        y = Y_BED_SIZE - bed_tramming_inset_lfbr[3];
         break;
       case 3:
         LCD_MESSAGE(MSG_TRAM_BL);
-        x = bed_tramming_inset_lfrb[0];
-        y = Y_BED_SIZE - bed_tramming_inset_lfrb[3];
+        x = bed_tramming_inset_lfbr[0];
+        y = Y_BED_SIZE - bed_tramming_inset_lfbr[3];
         break;
       #if ENABLED(BED_TRAMMING_INCLUDE_CENTER)
         case 4:
@@ -2686,16 +2686,12 @@ void applyMaxAccel() { planner.set_max_acceleration(hmiValue.axis, menuData.valu
   void setJDmm() { setPFloatOnClick(MIN_JD_MM, MAX_JD_MM, 3, applyJDmm); }
 #endif
 
-#if HAS_LIN_ADVANCE_K
+#if ENABLED(LIN_ADVANCE)
   #define LA_FDIGITS 3
   void applyLA_K() { planner.set_advance_k(menuData.value / POW(10, LA_FDIGITS)); }
-  void setLA_K() { setFloatOnClick(0, 10, LA_FDIGITS, planner.get_advance_k(), applyLA_K); }
-  void onDrawLA_K(MenuItem* menuitem, int8_t line) { onDrawFloatMenu(menuitem, line, LA_FDIGITS, planner.get_advance_k()); }
-  #if ENABLED(SMOOTH_LIN_ADVANCE)
-    void applySmoothLA() { stepper.set_advance_tau(menuData.value / POW(10, 2)); }
-    void setSmoothLA() { setPFloatOnClick(0, 0.5, 2, applySmoothLA); }
-  #endif
+  void setLA_K() { setFloatOnClick(0, 10, LA_FDIGITS, planner.extruder_advance_K[0], applyLA_K); }
 #endif
+
 #if HAS_X_AXIS
   void setStepsX() { hmiValue.axis = X_AXIS; setPFloatOnClick( min_steps_edit_values.x, max_steps_edit_values.x, UNITFDIGITS); }
 #endif
@@ -3551,15 +3547,9 @@ void drawTuneMenu() {
     #if ENABLED(PROUI_ITEM_JD)
       EDIT_ITEM(ICON_JDmm, MSG_JUNCTION_DEVIATION, onDrawPFloat3Menu, setJDmm, &planner.junction_deviation_mm);
     #endif
-    #if PROUI_ITEM_ADVK
-      static float editable_k;
-      editable_k = planner.get_advance_k();
-      EDIT_ITEM(ICON_MaxAccelerated, MSG_ADVANCE_K, onDrawLA_K, setLA_K, &editable_k);
-      #if ENABLED(SMOOTH_LIN_ADVANCE)
-        static float editable_u;
-        editable_u = stepper.get_advance_tau();
-        EDIT_ITEM(ICON_MaxSpeed, MSG_ADVANCE_TAU, onDrawPFloat2Menu, setSmoothLA, &editable_u);
-      #endif
+    #if ENABLED(PROUI_ITEM_ADVK)
+      float editable_k = planner.get_advance_k();
+      EDIT_ITEM(ICON_MaxAccelerated, MSG_ADVANCE_K, onDrawPFloat3Menu, setLA_K, &editable_k);
     #endif
     #if HAS_LOCKSCREEN
       MENU_ITEM(ICON_Lock, MSG_LOCKSCREEN, onDrawMenuItem, dwinLockScreen);
@@ -3595,7 +3585,7 @@ void drawTuneMenu() {
 }
 
 #if ENABLED(ADAPTIVE_STEP_SMOOTHING_TOGGLE)
-  void toggleAdaptiveStepSmoothing() {
+  void setAdaptiveStepSmoothing() {
     toggleCheckboxLine(stepper.adaptive_step_smoothing_enabled);
   }
 #endif
@@ -3677,7 +3667,7 @@ void drawTuneMenu() {
 
 void drawMotionMenu() {
   constexpr uint8_t items = (4
-    + COUNT_ENABLED(EDITABLE_STEPS_PER_UNIT, EDITABLE_HOMING_FEEDRATE, HAS_LIN_ADVANCE_K, SMOOTH_LIN_ADVANCE, SHAPING_MENU, ADAPTIVE_STEP_SMOOTHING_TOGGLE)
+    + COUNT_ENABLED(EDITABLE_STEPS_PER_UNIT, EDITABLE_HOMING_FEEDRATE, LIN_ADVANCE, SHAPING_MENU, ADAPTIVE_STEP_SMOOTHING_TOGGLE)
     + 2
   );
   checkkey = ID_Menu;
@@ -3696,21 +3686,15 @@ void drawMotionMenu() {
     #if ENABLED(EDITABLE_HOMING_FEEDRATE)
       MENU_ITEM(ICON_Homing, MSG_HOMING_FEEDRATE, onDrawSubMenu, drawHomingFRMenu);
     #endif
-    #if HAS_LIN_ADVANCE_K
-      static float editable_k;
-      editable_k = planner.get_advance_k();
-      EDIT_ITEM(ICON_MaxAccelerated, MSG_ADVANCE_K, onDrawLA_K, setLA_K, &editable_k);
-      #if ENABLED(SMOOTH_LIN_ADVANCE)
-        static float editable_u;
-        editable_u = stepper.get_advance_tau();
-        EDIT_ITEM(ICON_MaxSpeed, MSG_ADVANCE_TAU, onDrawPFloat2Menu, setSmoothLA, &editable_u);
-      #endif
+    #if ENABLED(LIN_ADVANCE)
+      float editable_k = planner.get_advance_k();
+      EDIT_ITEM(ICON_MaxAccelerated, MSG_ADVANCE_K, onDrawPFloat3Menu, setLA_K, &editable_k);
     #endif
     #if ENABLED(SHAPING_MENU)
       MENU_ITEM(ICON_InputShaping, MSG_INPUT_SHAPING, onDrawSubMenu, drawInputShaping_menu);
     #endif
     #if ENABLED(ADAPTIVE_STEP_SMOOTHING_TOGGLE)
-      EDIT_ITEM(ICON_UBLActive, MSG_STEP_SMOOTHING, onDrawChkbMenu, toggleAdaptiveStepSmoothing, &stepper.adaptive_step_smoothing_enabled);
+      EDIT_ITEM(ICON_UBLActive, MSG_STEP_SMOOTHING, onDrawChkbMenu, setAdaptiveStepSmoothing, &stepper.adaptive_step_smoothing_enabled);
     #endif
     EDIT_ITEM(ICON_Speed, MSG_SPEED, onDrawSpeedItem, setSpeed, &feedrate_percentage);
     EDIT_ITEM(ICON_Flow, MSG_FLOW, onDrawPIntMenu, setFlow, &planner.flow_percentage[0]);

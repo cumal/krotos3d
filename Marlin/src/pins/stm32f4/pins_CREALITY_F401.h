@@ -75,7 +75,7 @@
 //
 // Filament runout
 //
-#ifndef FIL_RUNOUT_PIN
+#if ENABLED(FILAMENT_RUNOUT_SENSOR)
   #define FIL_RUNOUT_PIN                    PC15
 #endif
 

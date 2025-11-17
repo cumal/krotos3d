@@ -32,11 +32,6 @@
 
 //#define ALTERNATIVE_LCD
 
-// Defined DOGLCD_SDA_PIN and DOGLCD_SCL_PIN pins indicate I2C LCD
-#if PINS_EXIST(DOGLCD_SDA, DOGLCD_SCL)
-  #define IS_I2C_LCD 1
-#endif
-
 #if ENABLED(REPRAPWORLD_GRAPHICAL_LCD)
 
   // RepRapWorld Graphical LCD
@@ -131,15 +126,12 @@
 
   // MKS 128x64 (SSD1306) OLED I2C LCD
 
-  #if IS_I2C_LCD
-    #define U8G_CLASS U8GLIB_SSD1306_128X64_2X_I2C_2_WIRE       // I2C
+  #define FORCE_SOFT_SPI                                        // SW-SPI
+
+  #if ENABLED(ALTERNATIVE_LCD)
+    #define U8G_CLASS U8GLIB_SSD1306_128X64_2X                  // 4 stripes
   #else
-    #define FORCE_SOFT_SPI                                      // SW-SPI
-    #if ENABLED(ALTERNATIVE_LCD)
-      #define U8G_CLASS U8GLIB_SSD1306_128X64_2X                // 4 stripes
-    #else
-      #define U8G_CLASS U8GLIB_SSD1306_128X64                   // 8 stripes
-    #endif
+    #define U8G_CLASS U8GLIB_SSD1306_128X64                     // 8 stripes
   #endif
 
 #elif ANY(FYSETC_242_OLED_12864, K3D_242_OLED_CONTROLLER)
@@ -176,9 +168,7 @@
   // - or -
   // Zonestar SH1106 OLED SPI LCD
 
-  #if !IS_I2C_LCD
-    #define FORCE_SOFT_SPI                                      // SW-SPI
-  #endif
+  #define FORCE_SOFT_SPI                                        // SW-SPI
   #if ENABLED(ALTERNATIVE_LCD)
     #define U8G_CLASS U8GLIB_SH1106_128X64_2X                   // 4 stripes
   #else
@@ -248,9 +238,7 @@
 
 // Use HW-SPI if no other option is specified
 #ifndef U8G_PARAM
-  #if IS_I2C_LCD
-    #define U8G_PARAM U8G_I2C_OPT_NONE                              // I2C LCD
-  #elif ENABLED(FORCE_SOFT_SPI)
+  #if ENABLED(FORCE_SOFT_SPI)
     #define U8G_PARAM DOGLCD_SCK, DOGLCD_MOSI, DOGLCD_CS, DOGLCD_A0 // SW-SPI
   #else
     #define U8G_PARAM DOGLCD_CS, DOGLCD_A0                          // HW-SPI

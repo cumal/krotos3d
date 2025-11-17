@@ -496,11 +496,6 @@
 #define AUX1_07                               58  // (A4)
 #define AUX1_08                                0  // RX0
 
-
-// #define M1_ENABLE_PIN      59
-// #define M2_ENABLE_PIN      64
-// #define M3_ENABLE_PIN      65
-// #define M4_ENABLE_PIN      66
 //
 // AUX2    GND A9 D40 D42 A11
 //          2   4   6   8  10
@@ -837,7 +832,7 @@
 
       #elif ENABLED(FYSETC_MINI_12864)
 
-        // From https://wiki.fysetc.com/docs/Mini12864Panel
+        // From https://wiki.fysetc.com/Mini12864_Panel/
 
         #define DOGLCD_A0            EXP1_04_PIN
         #define DOGLCD_CS            EXP1_03_PIN
@@ -869,7 +864,7 @@
     #elif ENABLED(MINIPANEL)
 
       #ifndef BEEPER_PIN
-        #define BEEPER_PIN               AUX2_08
+        #define BEEPER_PIN           AUX2_08_PIN
       #endif
       #define LCD_BACKLIGHT_PIN          AUX2_10
 

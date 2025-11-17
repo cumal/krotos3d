@@ -89,9 +89,7 @@
 
   #if HAS_TMCX1X0
 
-    #if ENABLED(TMC_DEBUG)
-      static uint32_t get_pwm_scale(TMC2130Stepper &st) { return st.PWM_SCALE(); }
-    #endif
+    static uint32_t get_pwm_scale(TMC2130Stepper &st) { return st.PWM_SCALE(); }
 
     static TMC_driver_data get_driver_data(TMC2130Stepper &st) {
       constexpr uint8_t OT_bp = 25, OTPW_bp = 26;
@@ -150,9 +148,7 @@
 
   #if HAS_DRIVER(TMC2240)
 
-    #if ENABLED(TMC_DEBUG)
-      static uint32_t get_pwm_scale(TMC2240Stepper &st) { return st.PWM_SCALE(); }
-    #endif
+    static uint32_t get_pwm_scale(TMC2240Stepper &st) { return st.PWM_SCALE(); }
 
     static TMC_driver_data get_driver_data(TMC2240Stepper &st) {
       constexpr uint8_t OT_bp = 25, OTPW_bp = 26;
@@ -211,9 +207,7 @@
 
   #if HAS_TMC220x
 
-    #if ENABLED(TMC_DEBUG)
-      static uint32_t get_pwm_scale(TMC2208Stepper &st) { return st.pwm_scale_sum(); }
-    #endif
+    static uint32_t get_pwm_scale(TMC2208Stepper &st) { return st.pwm_scale_sum(); }
 
     static TMC_driver_data get_driver_data(TMC2208Stepper &st) {
       constexpr uint8_t OTPW_bp = 0, OT_bp = 1;
@@ -248,9 +242,7 @@
 
   #if HAS_DRIVER(TMC2660)
 
-    #if ENABLED(TMC_DEBUG)
-      static uint32_t get_pwm_scale(TMC2660Stepper) { return 0; }
-    #endif
+    static uint32_t get_pwm_scale(TMC2660Stepper) { return 0; }
 
     static TMC_driver_data get_driver_data(TMC2660Stepper &st) {
       constexpr uint8_t OT_bp = 1, OTPW_bp = 2;
@@ -973,14 +965,14 @@
     TMC_REPORT("[mm/s]\t",           TMC_TPWMTHRS_MMS);
     TMC_REPORT("OT prewarn",         TMC_DEBUG_OTPW);
     #if ENABLED(MONITOR_DRIVER_STATUS)
-      TMC_REPORT("OTPW trig.\t",     TMC_OTPW_TRIGGERED);
+      TMC_REPORT("triggered\n OTP\t", TMC_OTPW_TRIGGERED);
     #endif
 
     #if HAS_TMC220x
-      TMC_REPORT("pwm scale sum",    TMC_PWM_SCALE_SUM);
-      TMC_REPORT("pwm scale auto",   TMC_PWM_SCALE_AUTO);
-      TMC_REPORT("pwm offset auto",  TMC_PWM_OFS_AUTO);
-      TMC_REPORT("pwm grad auto",    TMC_PWM_GRAD_AUTO);
+      TMC_REPORT("pwm scale sum",     TMC_PWM_SCALE_SUM);
+      TMC_REPORT("pwm scale auto",    TMC_PWM_SCALE_AUTO);
+      TMC_REPORT("pwm offset auto",   TMC_PWM_OFS_AUTO);
+      TMC_REPORT("pwm grad auto",     TMC_PWM_GRAD_AUTO);
     #endif
 
     TMC_REPORT("off time",           TMC_TOFF);
@@ -1021,7 +1013,7 @@
       TMC_REPORT("Supply (v)",       TMC_VSUPPLY);
       TMC_REPORT("Temp (°C)",        TMC_TEMP);
       TMC_REPORT("OT pre warn (°C)", TMC_OVERTEMP);
-      TMC_REPORT("OV threshold (v)", TMC_OVERVOLT_THD);
+      TMC_REPORT("OV theshold (v)",  TMC_OVERVOLT_THD);
     #endif
     SERIAL_EOL();
   }

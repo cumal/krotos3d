@@ -255,12 +255,10 @@ bool SdBaseFile::exists(const char *name) {
  * If no data is read, fgets() returns zero for EOF or -1 if an error occurred.
  */
 int16_t SdBaseFile::fgets(char *str, int16_t num, char *delim) {
-  if (!str || num <= 1) return -1; // Ensure space for at least '\0'
-
   char ch;
   int16_t n = 0;
   int16_t r = -1;
-  while (n < num - 1 && (r = read(&ch, 1)) == 1) {
+  while ((n + 1) < num && (r = read(&ch, 1)) == 1) {
     // delete CR
     if (ch == '\r') continue;
     str[n++] = ch;
@@ -271,7 +269,10 @@ int16_t SdBaseFile::fgets(char *str, int16_t num, char *delim) {
       if (strchr(delim, ch)) break;
     }
   }
-  if (r < 0) return -1; // read error
+  if (r < 0) {
+    // read error
+    return -1;
+  }
   str[n] = '\0';
   return n;
 }
@@ -341,9 +342,7 @@ int8_t SdBaseFile::lsPrintNext(const uint8_t flags, const uint8_t indent) {
   uint8_t w = 0;
 
   while (1) {
-    const int16_t r = read(&dir, sizeof(dir));
-    if (r < 0) return -1;
-    if (r != sizeof(dir)) return 0;
+    if (read(&dir, sizeof(dir)) != sizeof(dir)) return 0;
     if (dir.name[0] == DIR_NAME_FREE) return 0;
 
     // skip deleted entry and entries for . and  ..
@@ -1278,8 +1277,7 @@ int SdBaseFile::peek() {
   filepos_t pos;
   getpos(&pos);
   int c = read();
-  if (c < 0) return -1;
-  setpos(&pos);
+  if (c >= 0) setpos(&pos);
   return c;
 }
 
@@ -1348,10 +1346,8 @@ bool SdBaseFile::printName() {
  * If an error occurs or end of file is reached -1 is returned.
  */
 int16_t SdBaseFile::read() {
-  uint8_t b = 0;
-  const int16_t r = read(&b, 1);
-  if (r != 1) return -1;
-  return static_cast<int16_t>(b);
+  uint8_t b;
+  return read(&b, 1) == 1 ? b : -1;
 }
 
 /**

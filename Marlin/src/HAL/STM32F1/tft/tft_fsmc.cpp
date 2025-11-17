@@ -86,6 +86,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __DSB() {
 #define FSMC_ADDRESS_SETUP_TIME   15  // AddressSetupTime
 #define FSMC_DATA_SETUP_TIME      15  // DataSetupTime
 
+static uint8_t fsmcInit = 0;
 void TFT_FSMC::init() {
   uint8_t cs = FSMC_CS_PIN, rs = FSMC_RS_PIN;
   uint32_t controllerAddress;
@@ -98,9 +99,8 @@ void TFT_FSMC::init() {
 
   struct fsmc_nor_psram_reg_map* fsmcPsramRegion;
 
-  static bool fsmcInit = false;
   if (fsmcInit) return;
-  fsmcInit = true;
+  fsmcInit = 1;
 
   switch (cs) {
     case FSMC_CS_NE1: controllerAddress = (uint32_t)FSMC_NOR_PSRAM_REGION1; fsmcPsramRegion = FSMC_NOR_PSRAM1_BASE; break;

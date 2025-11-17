@@ -21,28 +21,9 @@
  */
 #pragma once
 
-/**
- * MarlinConfigPre.h
- *
- * Prefix header to acquire Configurations. Includes the following:
- *
- * Conditionals-1-axes.h
- *   MarlinConfigPre-1-axes.h
- *     Config.h
- *     macros.h
- *     boards.h
- *     Configuration.h (if not Config.h)
- *     HAL/platforms.h
- *     Version.h
- * Conditionals-2-LCD.h
- * Conditionals-3-etc.h
- * Conditionals-4-adv.h
- *   MarlinConfigPre-4-adv.h
- *     Conditionals-3-etc.h (as above)
- *     drivers.h
- *     Configuration_adv.h (if not Config.h)
- */
-
+//
+// Prefix header to acquire configurations
+//
 #include "Conditionals-1-axes.h"
 #include "Conditionals-2-LCD.h"
 #include "Conditionals-3-etc.h"

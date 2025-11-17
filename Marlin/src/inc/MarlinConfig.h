@@ -21,22 +21,9 @@
  */
 #pragma once
 
-/**
- * MarlinConfig.h
- *
- * Prefix header for all Marlin sources. Includes the following:
- *
- * Conditionals-6-type.h
- *   MarlinConfigPre-6-type.h
- *     Conditionals-5-post.h
- *       MarlinConfigPre.h
- *         ... (see the file) ...
- *       HAL.h
- *       pins.h
- *       HAL/timers.h
- *       HAL/spi_pins.h
- *     types.h
- */
+//
+// Prefix header for all Marlin sources
+//
 
 #include "Conditionals-6-type.h"
 

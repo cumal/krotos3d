@@ -117,7 +117,7 @@
 /**
  * FLSUN Hi-Speed has no hard-wired UART pins for TMC drivers.
  * Several wiring options are provided below, defaulting to
- * the most compatible.
+ * to the most compatible.
  */
 #if HAS_TMC_UART
   // SoftwareSerial with one pin per driver

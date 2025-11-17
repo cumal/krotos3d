@@ -22,7 +22,7 @@
 
 #include "../../../inc/MarlinConfig.h"
 
-#if HAS_LIN_ADVANCE_K
+#if ENABLED(LIN_ADVANCE)
 
 #include "../../gcode.h"
 #include "../../../module/planner.h"
@@ -41,9 +41,6 @@
  * With ADVANCE_K_EXTRA:
  *  S<0/1>      Activate slot 0 or 1.
  *  L<factor>   Set secondary advance K factor (Slot 1).
- *
- * With SMOOTH_LIN_ADVANCE:
- *  U<tau>      Set a tau value for LA smoothing
  */
 void GcodeSuite::M900() {
 
@@ -194,4 +191,4 @@ void GcodeSuite::M900_report(const bool forReplay/*=true*/) {
   }
 }
 
-#endif // HAS_LIN_ADVANCE_K
+#endif // LIN_ADVANCE

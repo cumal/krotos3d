@@ -111,7 +111,7 @@ void StatusScreen::send_buffer(CommandProcessor &cmd, const void *data, uint16_t
   const char *ptr = (const char*) data;
   constexpr uint16_t block_size = 512;
   char               block[block_size];
-  while (len > 0) {
+  for (;len > 0;) {
     const uint16_t nBytes = min(len, block_size);
     memcpy_P(block, ptr, nBytes);
     cmd.write((const void*)block, nBytes);

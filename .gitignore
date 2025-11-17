@@ -31,11 +31,6 @@ out-language/
 *.gen
 *.sublime-workspace
 
-# npm
-node_modules/
-package.json
-package-lock.json
-
 # OS
 applet/
 .DS_Store

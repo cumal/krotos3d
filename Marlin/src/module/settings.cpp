@@ -260,7 +260,6 @@ typedef struct SettingsDataStruct {
   //
   bool runout_sensor_enabled;                           // M412 S
   float runout_distance_mm;                             // M412 D
-  float motion_distance_mm;                             // M412 L
 
   //
   // ENABLE_LEVELING_FADE_HEIGHT
@@ -271,7 +270,8 @@ typedef struct SettingsDataStruct {
   // AUTOTEMP
   //
   #if ENABLED(AUTOTEMP)
-    autotemp_cfg_t planner_autotemp_cfg;                // M104 S B F
+    celsius_t planner_autotemp_max, planner_autotemp_min;
+    float planner_autotemp_factor;
   #endif
 
   //
@@ -480,7 +480,7 @@ typedef struct SettingsDataStruct {
   #endif
 
   //
-  // HAS_VOLUMETRIC_EXTRUSION
+  // !NO_VOLUMETRIC
   //
   bool parser_volumetric_enabled;                       // M200 S  parser.volumetric_enabled
   float planner_filament_size[EXTRUDERS];               // M200 T D  planner.filament_size[]
@@ -497,7 +497,7 @@ typedef struct SettingsDataStruct {
   //
   // LIN_ADVANCE
   //
-  #if HAS_LIN_ADVANCE_K
+  #if ENABLED(LIN_ADVANCE)
     float planner_extruder_advance_K[DISTINCT_E];       // M900 K  planner.extruder_advance_K
     #if ENABLED(SMOOTH_LIN_ADVANCE)
       float stepper_extruder_advance_tau[DISTINCT_E];   // M900 U  stepper.extruder_advance_tau
@@ -733,7 +733,7 @@ void MarlinSettings::postprocess() {
 
   TERN_(PIDTEMP, thermalManager.updatePID());
 
-  #if HAS_VOLUMETRIC_EXTRUSION
+  #if DISABLED(NO_VOLUMETRICS)
     planner.calculate_volumetric_multipliers();
   #elif EXTRUDERS
     for (uint8_t i = COUNT(planner.e_factor); i--;)
@@ -987,13 +987,6 @@ void MarlinSettings::postprocess() {
         constexpr float runout_distance_mm = 0;
       #endif
       EEPROM_WRITE(runout_distance_mm);
-
-      #if ENABLED(FILAMENT_SWITCH_AND_MOTION)
-        const float &motion_distance_mm = runout.motion_distance();
-      #else
-        constexpr float motion_distance_mm = 0;
-      #endif
-      EEPROM_WRITE(motion_distance_mm);
     }
 
     //
@@ -1011,8 +1004,10 @@ void MarlinSettings::postprocess() {
     // AUTOTEMP
     //
     #if ENABLED(AUTOTEMP)
-      _FIELD_TEST(planner_autotemp_cfg);
-      EEPROM_WRITE(thermalManager.autotemp.cfg);
+      _FIELD_TEST(planner_autotemp_max);
+      EEPROM_WRITE(planner.autotemp.max);
+      EEPROM_WRITE(planner.autotemp.min);
+      EEPROM_WRITE(planner.autotemp.factor);
     #endif
 
     //
@@ -1399,7 +1394,7 @@ void MarlinSettings::postprocess() {
     {
       _FIELD_TEST(parser_volumetric_enabled);
 
-      #if HAS_VOLUMETRIC_EXTRUSION
+      #if DISABLED(NO_VOLUMETRICS)
 
         EEPROM_WRITE(parser.volumetric_enabled);
         EEPROM_WRITE(planner.filament_size);
@@ -1561,7 +1556,7 @@ void MarlinSettings::postprocess() {
     // Linear Advance
     //
     {
-      #if HAS_LIN_ADVANCE_K
+      #if ENABLED(LIN_ADVANCE)
         _FIELD_TEST(planner_extruder_advance_K);
         EEPROM_WRITE(planner.extruder_advance_K);
         #if ENABLED(SMOOTH_LIN_ADVANCE)
@@ -2046,12 +2041,6 @@ void MarlinSettings::postprocess() {
         #if HAS_FILAMENT_RUNOUT_DISTANCE
           if (!validating) runout.set_runout_distance(runout_distance_mm);
         #endif
-
-        float motion_distance_mm;
-        EEPROM_READ(motion_distance_mm);
-        #if ENABLED(FILAMENT_SWITCH_AND_MOTION)
-          if (!validating) runout.set_motion_distance(motion_distance_mm);
-        #endif
       }
 
       //
@@ -2063,8 +2052,9 @@ void MarlinSettings::postprocess() {
       // AUTOTEMP
       //
       #if ENABLED(AUTOTEMP)
-        _FIELD_TEST(planner_autotemp_cfg);
-        EEPROM_READ(thermalManager.autotemp.cfg);
+        EEPROM_READ(planner.autotemp.max);
+        EEPROM_READ(planner.autotemp.min);
+        EEPROM_READ(planner.autotemp.factor);
       #endif
 
       //
@@ -2488,7 +2478,7 @@ void MarlinSettings::postprocess() {
         _FIELD_TEST(parser_volumetric_enabled);
         EEPROM_READ(storage);
 
-        #if HAS_VOLUMETRIC_EXTRUSION
+        #if DISABLED(NO_VOLUMETRICS)
           if (!validating) {
             parser.volumetric_enabled = storage.volumetric_enabled;
             COPY(planner.filament_size, storage.filament_size);
@@ -2514,7 +2504,7 @@ void MarlinSettings::postprocess() {
 
         #if HAS_TRINAMIC_CONFIG
 
-          #define SET_CURR(Q) stepper##Q.rms_current(currents.Q ?: Q##_CURRENT)
+          #define SET_CURR(Q) stepper##Q.rms_current(currents.Q ? currents.Q : Q##_CURRENT)
           if (!validating) {
             TERN_(X_IS_TRINAMIC,  SET_CURR(X));
             TERN_(Y_IS_TRINAMIC,  SET_CURR(Y));
@@ -2645,7 +2635,7 @@ void MarlinSettings::postprocess() {
       //
       // Linear Advance
       //
-      #if HAS_LIN_ADVANCE_K
+      #if ENABLED(LIN_ADVANCE)
       {
         float extruder_advance_K[DISTINCT_E];
         _FIELD_TEST(planner_extruder_advance_K);
@@ -2661,7 +2651,7 @@ void MarlinSettings::postprocess() {
             DISTINCT_E_LOOP() stepper.set_advance_tau(tau[e], e);
         #endif
       }
-      #endif // HAS_LIN_ADVANCE_K
+      #endif
 
       //
       // Motor Current PWM
@@ -3126,7 +3116,7 @@ void MarlinSettings::postprocess() {
   #if ENABLED(AUTO_BED_LEVELING_UBL)
 
     inline void ubl_invalid_slot(const int s) {
-      DEBUG_ECHOLN(F("?Invalid "), F("slot.\n"), s, F(" mesh slots available."));
+      DEBUG_ECHOLNPGM("?Invalid slot.\n", s, " mesh slots available.");
       UNUSED(s);
     }
 
@@ -3361,7 +3351,6 @@ void MarlinSettings::reset() {
     runout.enabled = FIL_RUNOUT_ENABLED_DEFAULT;
     runout.reset();
     TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, runout.set_runout_distance(FILAMENT_RUNOUT_DISTANCE_MM));
-    TERN_(FILAMENT_SWITCH_AND_MOTION,   runout.set_motion_distance(FILAMENT_MOTION_DISTANCE_MM));
   #endif
 
   //
@@ -3446,7 +3435,11 @@ void MarlinSettings::reset() {
   //
   // AUTOTEMP
   //
-  TERN_(AUTOTEMP, thermalManager.autotemp.reset());
+  #if ENABLED(AUTOTEMP)
+    planner.autotemp.max = AUTOTEMP_MAX;
+    planner.autotemp.min = AUTOTEMP_MIN;
+    planner.autotemp.factor = AUTOTEMP_FACTOR;
+  #endif
 
   //
   // X Axis Twist Compensation
@@ -3597,7 +3590,7 @@ void MarlinSettings::reset() {
   //
   // Volumetric & Filament Size
   //
-  #if HAS_VOLUMETRIC_EXTRUSION
+  #if DISABLED(NO_VOLUMETRICS)
     parser.volumetric_enabled = ENABLED(VOLUMETRIC_DEFAULT_ON);
     for (uint8_t q = 0; q < COUNT(planner.filament_size); ++q)
       planner.filament_size[q] = DEFAULT_NOMINAL_FILAMENT_DIA;
@@ -3846,11 +3839,6 @@ void MarlinSettings::reset() {
     gcode.say_units(); // " (in/mm)"
 
     //
-    // M104 settings for AUTOTEMP
-    //
-    TERN_(AUTOTEMP, gcode.M104_report());
-
-    //
     // M149 Temperature units
     //
     #if ENABLED(TEMPERATURE_UNITS_SUPPORT)
@@ -3863,7 +3851,7 @@ void MarlinSettings::reset() {
     //
     // M200 Volumetric Extrusion
     //
-    TERN_(HAS_VOLUMETRIC_EXTRUSION, gcode.M200_report(forReplay));
+    IF_DISABLED(NO_VOLUMETRICS, gcode.M200_report(forReplay));
 
     //
     // M92 Steps per Unit
@@ -3956,11 +3944,6 @@ void MarlinSettings::reset() {
     // Editable Servo Angles
     //
     TERN_(EDITABLE_SERVO_ANGLES, gcode.M281_report(forReplay));
-
-    //
-    // BLTouch High Speed Mode
-    //
-    TERN_(BLTOUCH_HS_MODE, gcode.M401_report(forReplay));
 
     //
     // Kinematic Settings
@@ -4095,7 +4078,7 @@ void MarlinSettings::reset() {
     //
     // Linear Advance
     //
-    TERN_(HAS_LIN_ADVANCE_K, gcode.M900_report(forReplay));
+    TERN_(LIN_ADVANCE, gcode.M900_report(forReplay));
 
     //
     // Motor Current (SPI or PWM)

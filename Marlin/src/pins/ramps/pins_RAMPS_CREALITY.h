@@ -27,9 +27,7 @@
   #error "Creality RAMPS supports up to 2 hotends / E steppers."
 #endif
 
-#ifndef BOARD_INFO_NAME
-  #define BOARD_INFO_NAME "Creality3D RAMPS"
-#endif
+#define BOARD_INFO_NAME "Creality3D RAMPS"
 
 //#define CR2020_INDUSTRIAL_SERIES                // Use layout specific to CR2020
 
@@ -99,7 +97,6 @@
 //
 // LCD / Controller
 //
-
 #ifndef BEEPER_PIN
   #define BEEPER_PIN                          37  // Always define beeper pin so Play Tone works with ExtUI
 #endif

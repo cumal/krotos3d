@@ -160,7 +160,7 @@ typedef struct {
     #define Z_POST_CLEARANCE hmiData.zAfterHoming
   #endif
   #if ALL(LED_CONTROL_MENU, HAS_COLOR_LEDS)
-    LED1Color_t ledColor = defColorLeds;
+    LEDColor ledColor = defColorLeds;
   #endif
   #if HAS_GCODE_PREVIEW
     bool enablePreview = true;
@@ -288,7 +288,7 @@ void dwinCheckStatusMessage();
 void dwinHomingStart();
 void dwinHomingDone();
 #if HAS_MESH
-  void dwinMeshUpdate(const int8_t cpos, const int8_t tpos, const float zval);
+  void dwinMeshUpdate(const int8_t cpos, const int8_t tpos, const_float_t zval);
 #endif
 void dwinLevelingStart();
 void dwinLevelingDone();

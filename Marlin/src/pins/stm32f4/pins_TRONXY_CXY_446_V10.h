@@ -103,10 +103,8 @@
 //
 // Filament Sensors
 //
-#ifndef FIL_RUNOUT_PIN
+#if ENABLED(FILAMENT_RUNOUT_SENSOR)
   #define FIL_RUNOUT_PIN                    PE6
-#endif
-#ifndef FIL_RUNOUT2_PIN
   #define FIL_RUNOUT2_PIN                   PF12
 #endif
 

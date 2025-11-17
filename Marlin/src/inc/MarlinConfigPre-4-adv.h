@@ -21,16 +21,14 @@
  */
 #pragma once
 
+#include "Conditionals-3-etc.h"
+
 #ifndef __MARLIN_DEPS__
   #include HAL_PATH(.., inc/Conditionals_LCD.h)
 #endif
 
-#include "Conditionals-3-etc.h"
-
 #include "../core/drivers.h"
 
 #if USE_STD_CONFIGS
-  #if __has_include("../../Configuration_adv.h")
-    #include "../../Configuration_adv.h"
-  #endif
+  #include "../../Configuration_adv.h"
 #endif

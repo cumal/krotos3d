@@ -149,7 +149,7 @@
 
 #if ENABLED(FYSETC_MINI_12864)
   //
-  // See https://wiki.fysetc.com/docs/Mini12864Panel
+  // See https://wiki.fysetc.com/Mini12864_Panel/
   //
   #define DOGLCD_A0                         PE9
   #define DOGLCD_CS                         PE8
