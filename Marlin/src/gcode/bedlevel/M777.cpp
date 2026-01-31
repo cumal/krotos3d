@@ -26,7 +26,9 @@
 #include "../../feature/bedlevel/bedlevel.h"
 #include "../../module/planner.h"
 #include "../../module/probe.h"
+#include "../../module/stepper.h"
 #include "../../core/serial.h"
+#include "../../HAL/shared/Delay.h"
 
 #if ENABLED(EEPROM_SETTINGS)
   #include "../../module/settings.h"
@@ -38,80 +40,87 @@
 
 // Custom parameters
 #define MAXREPETITIONS 5
-#define MAXOFFSET 2 // correspond to 0.2 see (1)
-#define Z_MOTORS_POS { { 20, Y_BED_SIZE-30 } , { 20, 40 } , { X_BED_SIZE-70 , Y_BED_SIZE-30 } , { X_BED_SIZE-70 , 40 } }
+#define MAXOFFSET 0.05f // Tolerance in mm (0.05mm)
+#define Z_MOTORS_POS { { 10, Y_BED_SIZE-30 } , { 10, 20 } , { X_BED_SIZE-60 , Y_BED_SIZE-30 } , { X_BED_SIZE-60 , 20 } }
 
 /**
  * M777: Hardware bed leveling
  */
 
- void moveMotor(const int mot, int loo) {
-  if (loo == 0) {
-    return;
-  } else if (loo > 0) {
-    digitalWrite(Z_DIR_PIN, HIGH); //High=up dir
-  } else {
-    digitalWrite(Z_DIR_PIN, LOW); //LOW=down dir
+void set_aux_motor_enable(const uint8_t motor_index, const bool enable) {
+  // Logic: 0 = Enable (LOW), 255 = Disable (HIGH)
+  const int val = enable ? 0 : 255;
+  switch (motor_index) {
+    case 0: analogWrite(AUX2_03, val); break;
+    case 1: analogWrite(AUX2_05, val); break;
+    case 2: analogWrite(AUX2_10, val); break;
+    case 3: analogWrite(AUX2_09, val); break;
   }
-  analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
-  if (mot==0){ // Activate motor 0 and disable rest
-    analogWrite(AUX2_03, 0);
-    analogWrite(AUX2_05, 255);
-    analogWrite(AUX2_10, 255);
-    analogWrite(AUX2_09, 255);
-  } else if (mot==1) { // Activate motor 1 and disable rest
-    analogWrite(AUX2_05, 0);
-    analogWrite(AUX2_03, 255);
-    analogWrite(AUX2_10, 255);
-    analogWrite(AUX2_09, 255);
-  } else if (mot==2) { // Activate motor 2 and disable rest
-    analogWrite(AUX2_10, 0);
-    analogWrite(AUX2_03, 255);
-    analogWrite(AUX2_05, 255);
-    analogWrite(AUX2_09, 255);
-  } else if (mot==3) { // Activate motor 3 and disable rest
-    analogWrite(AUX2_09, 0);
-    analogWrite(AUX2_03, 255);
-    analogWrite(AUX2_05, 255);
-    analogWrite(AUX2_10, 255);
-  }
-  for (int x = 0; x < abs(loo*40); x++) { // Move steps. Normally 400 steps per mm, reduced to 40 see (1)
-    digitalWrite(Z_STEP_PIN, HIGH);
-    delay (2.5);
-    digitalWrite(Z_STEP_PIN, LOW);
-    delay (2.5);
-    idle();
-  }
-  // Deactivate motor
-  if (mot==0){ analogWrite(AUX2_03, 255); }
-  else if (mot==1){ analogWrite(AUX2_05, 255); }
-  else if (mot==2){ analogWrite(AUX2_10, 255); }
-  else if (mot==3){ analogWrite(AUX2_09, 255); }
-  analogWrite(Z_ENABLE_PIN, 0); // Activate Z steppers to keep height
 }
 
-int getDesviation(){
-  int measuredDesv = 0;
-  gcode.process_subcommands_now("G91"); // Relative positioning
-  if (digitalRead(Z_MIN_PIN) == LOW) { // Endpoint triggered. Go down
-    while (digitalRead(Z_MIN_PIN) == LOW){
-      gcode.process_subcommands_now("G1 Z0.1");
-      planner.synchronize();
-      measuredDesv = measuredDesv - 1; // Use 1 instead of 0.1 to avoid float errors (1)
+void moveMotorsParallel(const float deviations[4]) {
+  const float steps_per_mm = planner.settings.axis_steps_per_mm[Z_AXIS];
+  uint32_t steps[4];
+  bool dir[4];
+  bool has_steps = false;
+
+  for (uint8_t i = 0; i < 4; i++) {
+    steps[i] = lround(abs(deviations[i]) * steps_per_mm);
+    dir[i] = deviations[i] > 0; // True = UP (HIGH), False = DOWN (LOW)
+    if (steps[i] > 0) has_steps = true;
+  }
+
+  if (!has_steps) return;
+
+  // 1. Disable global Z enable to prevent conflicts
+  analogWrite(Z_ENABLE_PIN, 255);
+
+  // Process one direction at a time (UP then DOWN)
+  for (uint8_t d = 0; d < 2; d++) {
+    bool current_dir = (d == 0); // First UP (true), then DOWN (false)
+    
+    // Find max steps for this direction group
+    uint32_t max_steps = 0;
+    for (uint8_t i = 0; i < 4; i++) {
+      if (dir[i] == current_dir && steps[i] > 0) {
+        max_steps = _MAX(max_steps, steps[i]);
+      }
     }
-    measuredDesv = measuredDesv + 1; // last move goes out height
-  } else { // Endpoint not triggered. Go up
-    while (digitalRead(Z_MIN_PIN) != LOW){
-      gcode.process_subcommands_now("G1 Z-0.1");
-      planner.synchronize();
-      measuredDesv = measuredDesv + 1; // Use 1 instead of 0.1 to avoid float errors (1)
+
+    if (max_steps == 0) continue;
+
+    // Set Direction and Enable relevant motors
+    digitalWrite(Z_DIR_PIN, current_dir ? HIGH : LOW);
+    for (uint8_t i = 0; i < 4; i++) {
+      set_aux_motor_enable(i, (dir[i] == current_dir && steps[i] > 0));
+    }
+
+    // Step loop
+    for (uint32_t s = 0; s < max_steps; s++) {
+      // Disable motors that have finished their specific step count
+      for (uint8_t i = 0; i < 4; i++) {
+        if (dir[i] == current_dir && steps[i] > 0 && s == steps[i]) {
+          set_aux_motor_enable(i, false);
+        }
+      }
+      digitalWrite(Z_STEP_PIN, HIGH);
+      DELAY_US(300); // ~1.6kHz stepping (~4mm/s)
+      digitalWrite(Z_STEP_PIN, LOW);
+      DELAY_US(300);
+      idle();
+    }
+    
+    // Ensure all in this group are disabled
+    for (uint8_t i = 0; i < 4; i++) {
+      if (dir[i] == current_dir) set_aux_motor_enable(i, false);
     }
   }
-  gcode.process_subcommands_now("G90"); // Absolute positioning
-  return measuredDesv;
+
+  // Re-enable global Z to hold position
+  analogWrite(Z_ENABLE_PIN, 0);
 }
 
-float getMin(int array[]){
+float getMin(float array[]){
   float minimum = array[0];
   for (int i = 0; i < 4; i++) {
     if (array[i] < minimum) { minimum = array[i]; }
@@ -119,7 +128,7 @@ float getMin(int array[]){
   return minimum;
 }
 
-float getMax(int array[]){
+float getMax(float array[]){
   float maximun = array[0];
   for (int i = 0; i < 4; i++) {
     if (array[i] > maximun) { maximun = array[i]; }
@@ -127,15 +136,9 @@ float getMax(int array[]){
   return maximun;
 }
 
-void aBitDown(){
-  gcode.process_subcommands_now("G91"); // Relative positioning
-  gcode.process_subcommands_now("G1 Z5");
-  planner.synchronize();
-  gcode.process_subcommands_now("G90"); // Absolute positioning
-}
-
-void printDesviationSummary(int items[]) {
-  SERIAL_ECHOLN("Desviation summary: ", items[0], ",", items[1], ",", items[2], ",", items[3]);
+void printDesviationSummary(float items[], float diff) {
+  SERIAL_ECHOLN("Deviation summary: ", items[0], ", ", items[1], ", ", items[2], ", ", items[3]);
+  SERIAL_ECHOLN("Diff: ", diff);
 }
  
 void GcodeSuite::M777() {
@@ -146,41 +149,57 @@ void GcodeSuite::M777() {
     iter = MAXREPETITIONS;
   }
   SERIAL_ECHOLN("Starting HW bed leveling. R:", iter);
-  float probe_z_offset = probe.offset.z; // Gets z probe offset
-  gcode.process_subcommands_now("M851 Z0"); // Removes Z probe offset
-  gcode.process_subcommands_now("G90"); // Absolute positioning
-  gcode.process_subcommands_now("G28 X Y"); // Home XY
+  //float probe_z_offset = probe.offset.z;
+  //probe.offset.z = 0;
+  
+  // Ensure probe is ready
+  if (probe.deploy()) return;
+
+  gcode.process_subcommands_now(F("G28")); // Home XY
   planner.synchronize();
+
   int repTimes = 1;
   bool run = true;
   xy_pos_t motPosition[4] = Z_MOTORS_POS;
-  char cmd[20], str_1[16], str_2[16];
-  int motDesv[4];
-  int heightDiff;
+  float motDesv[4];
+  float heightDiff;
+
   while (run){
-    gcode.process_subcommands_now("G28 Z"); // Center
-    planner.synchronize(); // Wait move to finish
     for (int i = 0; i < 4; i++) {
-      gcode.process_subcommands_now("G90"); // Absolute positioning
-      sprintf_P(cmd, PSTR("G1X%sY%sZ0"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
-      gcode.process_subcommands_now(cmd); // Move to measure position
-      planner.synchronize();
-      motDesv[i] = getDesviation(); // Gets the height difference
+      // Move to measurement position
+      // do_blocking_move_to_xy(motPosition[i]);
+      
+      // Probe the point. probe_at_point returns the bed Z height.
+      // We want the bed to be at Z=0 (or consistent).
+      // If bed is at -1.0, we need to move it UP by 1.0.
+      // Correction = -measured_z.
+      const float measured_z = probe.probe_at_point(motPosition[i], PROBE_PT_NONE, 0);
+      
+      if (isnan(measured_z)) {
+        SERIAL_ECHOLN("Probe failed at point ", i);
+        probe.stow();
+        return;
+      }
+
+      motDesv[i] = -measured_z; // Amount to move motor to reach Z=0
     }
-    for (int i = 0; i < 4; i++) {
-      moveMotor(i, motDesv[i]); // fix height
-    }
-    gcode.process_subcommands_now("G91"); // Relative positioning
-    gcode.process_subcommands_now("G1Z10");
-    //printDesviationSummary(motDesv);
+
+    // Apply corrections
+    planner.synchronize(); // Ensure no moves are active
+    moveMotorsParallel(motDesv);
+    
     heightDiff = (getMax(motDesv) - getMin(motDesv));
-    if ( (heightDiff <= MAXOFFSET) || (repTimes == iter) ) {
+    printDesviationSummary(motDesv, heightDiff);
+
+    if ( (abs(heightDiff) <= MAXOFFSET) || (repTimes >= iter) ) {
       run = false;
     } else {
-      repTimes=repTimes+1;
+      gcode.process_subcommands_now(F("G28 Z")); // Re-home Z after adjustment
+      planner.synchronize();
+      repTimes++;
     }
   }
-  sprintf_P(cmd, PSTR("M851Z%s"), dtostrf(probe_z_offset, 6, 2, str_1)); // Restore Z probe offset
-  gcode.process_subcommands_now(cmd); // Move to measure position
+  probe.stow();
+  //probe.offset.z = probe_z_offset;
   SERIAL_ECHOLN("Ended HW bed leveling. Diff:", heightDiff, " Reps:", repTimes);
 }
