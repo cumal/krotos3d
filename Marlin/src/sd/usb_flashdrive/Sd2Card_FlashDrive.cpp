@@ -103,7 +103,6 @@
 
   #define UHS_START usb.start()
   #define UHS_STATE(state) USB_STATE_##state
-
 #endif
 
 #include "Sd2Card_FlashDrive.h"

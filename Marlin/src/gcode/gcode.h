@@ -282,7 +282,7 @@
  * M672 - Set/Reset Duet Smart Effector's sensitivity. (Requires DUET_SMART_EFFECTOR and SMART_EFFECTOR_MOD_PIN)
  * M701 - Load filament (Requires FILAMENT_LOAD_UNLOAD_GCODES)
  * M702 - Unload filament (Requires FILAMENT_LOAD_UNLOAD_GCODES)
- *
+ * M777 - Hardware bed leveling
  *** PRUSA_MMU3 ***
  * M704 - Preload to MMU
  * M705 - Eject filament
@@ -1229,6 +1229,8 @@ private:
     static void M709();
     static void MMU3_report(const bool forReplay=true);
   #endif
+
+  static void M777();
 
   #if ENABLED(GCODE_REPEAT_MARKERS)
     static void M808();

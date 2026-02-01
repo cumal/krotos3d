@@ -232,7 +232,6 @@ class Backlash::StepAdjuster {
     measured_mm.z += current_position.z - start_height;
     measured_count.z++;
   }
-
 #endif
 
 #endif // BACKLASH_COMPENSATION

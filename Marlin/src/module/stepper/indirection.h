@@ -1075,7 +1075,6 @@ void reset_stepper_drivers();    // Called by settings.load / settings.reset
 //
 
 #if ENABLED(MIXING_EXTRUDER)
-
   /**
    * Mixing steppers keep all their enable (and direction) states synchronized
    */

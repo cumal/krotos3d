@@ -442,7 +442,6 @@ void test_tmc_connection(LOGICAL_AXIS_DECL_LC(const bool, true));
 
       return drv_status.stallGuard;
     }
-
   #endif // SPI_ENDSTOPS
 
 #endif // USE_SENSORLESS

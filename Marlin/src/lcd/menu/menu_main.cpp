@@ -573,7 +573,6 @@ void menu_main() {
         #endif
       );
     }
-
   #endif
 
   END_MENU();

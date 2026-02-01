@@ -30,7 +30,6 @@
 #if ENABLED(DELTA)
 
   #include "../../module/delta.h"
-
   /**
    * M665: Set delta configurations
    *

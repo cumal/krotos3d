@@ -114,7 +114,6 @@ FORCE_INLINE bool G38_run_probe() {
  *  G38.5 - Probe away from workpiece, stop on contact break
  */
 void GcodeSuite::G38(const int8_t subcode) {
-
   // Get X Y Z E F
   get_destination_from_command();
 

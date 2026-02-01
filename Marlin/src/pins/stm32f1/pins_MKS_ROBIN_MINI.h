@@ -108,7 +108,6 @@
 #ifndef DEFAULT_PWM_MOTOR_CURRENT
   #define DEFAULT_PWM_MOTOR_CURRENT { 800, 800, 800 }
 #endif
-
 //
 // Temperature Sensors
 //

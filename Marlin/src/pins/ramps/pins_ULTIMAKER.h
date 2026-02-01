@@ -118,7 +118,6 @@
 //
 // LCD / Controller
 //
-
 #if HAS_WIRED_LCD
 
   #define BEEPER_PIN                          18
